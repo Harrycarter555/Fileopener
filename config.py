@@ -1,3 +1,3 @@
 # config.py
-TELEGRAM_TOKEN = '7370642028:AAFiTg3L4T7sLEZeRuaodmlhiwVsXZ5LeKE'
+TELEGRAM_TOKEN = '7282920055:AAEMAGCdPR74Q4tTJBsXuY1DM67pFlriZLg'
 WEBHOOK_URL = 'https://payee-neon.vercel.app/webhook'
