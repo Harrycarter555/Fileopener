@@ -2,18 +2,17 @@ import os
 import requests
 from flask import Flask, request, send_from_directory
 from telegram import Bot, Update
-from telegram.ext import Dispatcher, CommandHandler, CallbackContext
+from telegram.ext import Dispatcher, CommandHandler, CallbackContext, CallbackQueryHandler
 
 app = Flask(__name__)
 
 # Load configuration from environment variables
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
+FILE_OPENER_BOT_USERNAME = os.getenv('FILE_OPENER_BOT_USERNAME')
 
-if not TELEGRAM_TOKEN:
-    raise ValueError("TELEGRAM_TOKEN environment variable is not set.")
-if not WEBHOOK_URL:
-    raise ValueError("WEBHOOK_URL environment variable is not set.")
+if not TELEGRAM_TOKEN or not WEBHOOK_URL or not FILE_OPENER_BOT_USERNAME:
+    raise ValueError("One or more environment variables are not set.")
 
 # Initialize Telegram bot
 bot = Bot(token=TELEGRAM_TOKEN)
@@ -21,10 +20,35 @@ dispatcher = Dispatcher(bot, None, workers=0)
 
 # Define the start command handler
 def start(update: Update, context: CallbackContext):
-    update.message.reply_text('Hello, World!')
+    update.message.reply_text('Welcome! Please use the link provided in the channel.')
+
+# Define the handler for callback queries
+def handle_link(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+    
+    # Fetch the link and other information from the callback data
+    link = query.data  # This assumes the callback data contains the link
+    file_name = "Sample File Name"  # Replace with logic to fetch actual file name
+    shorten_link = link  # Link is already shortened
+    tutorial_link = "http://tutorial.example.com"  # Replace with actual tutorial link
+
+    # Example photo URL (same for all files)
+    PHOTO_URL = 'https://example.com/path/to/photo.jpg'
+
+    # Create a message with the file details
+    message = (
+        f"File Name: {file_name}\n\n"
+        f"Link is Here:\n{shorten_link}\n\n"
+        f"How to Open Tutorial:\n{tutorial_link}"
+    )
+    
+    # Send the photo and message to the user
+    bot.send_photo(chat_id=query.message.chat_id, photo=PHOTO_URL, caption=message)
 
 # Add handlers to dispatcher
 dispatcher.add_handler(CommandHandler('start', start))
+dispatcher.add_handler(CallbackQueryHandler(handle_link))
 
 # Webhook route
 @app.route('/webhook', methods=['POST'])
@@ -46,7 +70,7 @@ def favicon():
 # Webhook setup route
 @app.route('/setwebhook', methods=['GET', 'POST'])
 def setup_webhook():
-    webhook_url = f'https://fileopener.vercel.app/webhook'  # Ensure this URL is correct
+    webhook_url = f'{WEBHOOK_URL}'  # Ensure this URL is correct
     response = requests.post(
         f'https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook',
         data={'url': webhook_url}
