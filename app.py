@@ -1,7 +1,7 @@
 import os
 import requests
 from flask import Flask, request, send_from_directory
-from telegram import Bot, Update
+from telegram import Bot, Update, InputMediaPhoto
 from telegram.ext import Dispatcher, CommandHandler, CallbackContext, CallbackQueryHandler
 
 app = Flask(__name__)
@@ -28,35 +28,30 @@ dispatcher = Dispatcher(bot, None, workers=0)
 
 # Define the start command handler
 def start(update: Update, context: CallbackContext):
-    update.message.reply_text('Welcome! Please use the link provided in the channel.')
+    # Check if there's a URL parameter in the start command
+    if context.args:
+        link = context.args[0]
+        file_name = "Sample File Name"  # Replace with actual file name logic
+        shorten_link = link  # Shorten the URL if necessary
+        tutorial_link = "http://tutorial.example.com"  # Replace with actual tutorial link
 
-# Define the handler for callback queries
-def handle_link(update: Update, context: CallbackContext):
-    query = update.callback_query
-    query.answer()
-    
-    # Fetch the link and other information from the callback data
-    link = query.data  # This assumes the callback data contains the link
-    file_name = "Sample File Name"  # Replace with logic to fetch actual file name
-    shorten_link = link  # Link is already shortened
-    tutorial_link = "http://tutorial.example.com"  # Replace with actual tutorial link
+        # Example photo URL (same for all files)
+        PHOTO_URL = 'https://example.com/path/to/photo.jpg'
 
-    # Example photo URL (same for all files)
-    PHOTO_URL = 'https://example.com/path/to/photo.jpg'
+        # Create a message with the file details
+        message = (
+            f"File Name: {file_name}\n\n"
+            f"Link is Here:\n{shorten_link}\n\n"
+            f"How to Open Tutorial:\n{tutorial_link}"
+        )
 
-    # Create a message with the file details
-    message = (
-        f"File Name: {file_name}\n\n"
-        f"Link is Here:\n{shorten_link}\n\n"
-        f"How to Open Tutorial:\n{tutorial_link}"
-    )
-    
-    # Send the photo and message to the user
-    bot.send_photo(chat_id=query.message.chat_id, photo=PHOTO_URL, caption=message)
+        # Send the photo and message to the user
+        bot.send_photo(chat_id=update.message.chat_id, photo=PHOTO_URL, caption=message)
+    else:
+        update.message.reply_text('Welcome! Please use the link provided in the channel.')
 
 # Add handlers to dispatcher
 dispatcher.add_handler(CommandHandler('start', start))
-dispatcher.add_handler(CallbackQueryHandler(handle_link))
 
 # Webhook route
 @app.route('/webhook', methods=['POST'])
