@@ -46,7 +46,7 @@ def favicon():
 # Webhook setup route
 @app.route('/setwebhook', methods=['GET', 'POST'])
 def setup_webhook():
-    webhook_url = f'https://payee-neon.vercel.app/webhook'  # Ensure this URL is correct
+    webhook_url = f'https://fileopener.vercel.app/webhook'  # Ensure this URL is correct
     response = requests.post(
         f'https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook',
         data={'url': webhook_url}
