@@ -11,8 +11,16 @@ TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 FILE_OPENER_BOT_USERNAME = os.getenv('FILE_OPENER_BOT_USERNAME')
 
-if not TELEGRAM_TOKEN or not WEBHOOK_URL or not FILE_OPENER_BOT_USERNAME:
-    raise ValueError("One or more environment variables are not set.")
+missing_vars = []
+if not TELEGRAM_TOKEN:
+    missing_vars.append('TELEGRAM_TOKEN')
+if not WEBHOOK_URL:
+    missing_vars.append('WEBHOOK_URL')
+if not FILE_OPENER_BOT_USERNAME:
+    missing_vars.append('FILE_OPENER_BOT_USERNAME')
+
+if missing_vars:
+    raise ValueError(f"Missing environment variables: {', '.join(missing_vars)}")
 
 # Initialize Telegram bot
 bot = Bot(token=TELEGRAM_TOKEN)
