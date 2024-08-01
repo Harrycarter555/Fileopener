@@ -62,10 +62,10 @@ def start(update: Update, context: CallbackContext):
             photo_url = 'https://github.com/Harrycarter555/Fileopener/blob/main/IMG_20240801_223423_661.jpg'
             tutorial_link = 'https://example.com/tutorial'  # Replace with actual tutorial link
 
-            # Prepare the message
-            message = (f'📂 **File Name:** Your File Name Here\n\n'
-                       f'🔗 **Link is Here:**\n{shortened_link}\n\n'
-                       f'📘 **How to open Tutorial:**\n{tutorial_link}')
+            # Prepare the message with MarkdownV2 formatting
+            message = (f'📂 *File Name:* Your File Name Here\n\n'
+                       f'🔗 *Link is Here:*\n{shortened_link}\n\n'
+                       f'📘 *How to open Tutorial:*\n{tutorial_link}')
 
             # Send the photo first
             bot.send_photo(chat_id=update.message.chat_id, photo=photo_url)
