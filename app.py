@@ -30,11 +30,17 @@ def start(update: Update, context: CallbackContext):
     try:
         if context.args:
             encoded_url = context.args[0]
-            decoded_url = unquote(encoded_url)  # Decode the URL
+            decoded_url = unquote(encoded_url)
             logging.info(f"Decoded URL: {decoded_url}")
 
-            # Provide information or perform actions with the decoded URL
-            update.message.reply_text(f'Here is your link: {decoded_url}')
+            # Check if the URL is valid
+            response = requests.get(decoded_url)
+            if response.status_code == 200:
+                file_url = decoded_url
+                # Send the file as a streamable link
+                update.message.reply_text(f'Here is your file: {file_url}')
+            else:
+                update.message.reply_text('Failed to retrieve the file. The URL might be incorrect.')
         else:
             update.message.reply_text('Welcome! Please use the link provided in the channel.')
     except Exception as e:
@@ -54,23 +60,6 @@ def webhook():
     except Exception as e:
         logging.error(f'Error processing update: {e}')
         return 'error', 500
-
-# Home route
-@app.route('/')
-def home():
-    return 'Hello, World!'
-
-# Webhook setup route
-@app.route('/setwebhook', methods=['GET', 'POST'])
-def setup_webhook():
-    response = requests.post(
-        f'https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook',
-        data={'url': WEBHOOK_URL}
-    )
-    if response.json().get('ok'):
-        return "Webhook setup ok"
-    else:
-        return "Webhook setup failed"
 
 if __name__ == '__main__':
     app.run(port=5000)
