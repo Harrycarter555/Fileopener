@@ -33,11 +33,11 @@ def start(update: Update, context: CallbackContext):
             decoded_url = unquote(encoded_url)
             logging.info(f"Decoded URL: {decoded_url}")
 
-            # Check if the URL is valid
+            # Use the decoded URL to stream the file
             response = requests.get(decoded_url)
             if response.status_code == 200:
+                # Send the file URL to the user
                 file_url = decoded_url
-                # Send the file as a streamable link
                 update.message.reply_text(f'Here is your file: {file_url}')
             else:
                 update.message.reply_text('Failed to retrieve the file. The URL might be incorrect.')
