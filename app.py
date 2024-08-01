@@ -21,7 +21,7 @@ dispatcher = Dispatcher(bot, None, workers=0)
 # Define the start command handler
 def start(update: Update, context: CallbackContext):
     if context.args:
-        shortened_url = context.args[0]  # Extract shortened URL from command argument
+        shorten_url = context.args[0]  # Extract shortened URL from command argument
         
         # Example details (Replace with actual logic to fetch these details)
         file_name = "Sample File Name"  # Replace with actual file name
@@ -33,7 +33,7 @@ def start(update: Update, context: CallbackContext):
         # Create a message with the file details
         message = (
             f"File Name: {file_name}\n\n"
-            f"Link is Here:\n{shortened_url}\n\n"
+            f"Link is Here:\n{shorten_url}\n\n"
             f"How to Open Video:\n{how_to_open_video_link}"
         )
         
