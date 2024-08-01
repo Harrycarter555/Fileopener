@@ -2,9 +2,9 @@ import os
 import base64
 import requests
 from flask import Flask, request
-from telegram import Bot, Update
+from telegram import Bot, Update, InputMediaPhoto
 from telegram.ext import Dispatcher, CommandHandler, CallbackContext
-from urllib.parse import quote, unquote
+from urllib.parse import quote
 import logging
 
 app = Flask(__name__)
@@ -57,9 +57,15 @@ def start(update: Update, context: CallbackContext):
             shortened_link = shorten_url(decoded_url)
             logging.info(f"Shortened URL: {shortened_link}")
 
-            # Provide formatted response
+            # Define photo URL and tutorial link
+            photo_url = 'https://example.com/photo.jpg'  # Replace with actual photo URL
+            tutorial_link = 'https://example.com/tutorial'  # Replace with actual tutorial link
+
+            # Send photo and formatted message
+            bot.send_photo(chat_id=update.message.chat_id, photo=photo_url, caption="File Name")
+
             message = (f'Link is Here:\n{shortened_link}\n\n'
-                       f'Here is your file: {decoded_url}')
+                       f'How to open Tutorial:\n{tutorial_link}')
             update.message.reply_text(message)
         else:
             update.message.reply_text('Welcome! Please use the link provided in the channel.')
