@@ -46,38 +46,17 @@ def shorten_url(long_url: str) -> str:
 # Handle the start command
 def start(update: Update, context: CallbackContext):
     try:
-        # Extract the start parameter if present
         if context.args:
             encoded_url = context.args[0]
-            long_url = unquote(encoded_url)
-            shortened_link = shorten_url(long_url)
-            logging.info(f"Received URL: {long_url}")
-            show_file_info(update, shortened_link)
+            decoded_url = unquote(encoded_url)
+            logging.info(f"Decoded URL: {decoded_url}")
+
+            # Show file information or perform actions with the decoded URL
+            update.message.reply_text(f'Here is your link: {decoded_url}')
         else:
             update.message.reply_text('Welcome! Please use the link provided in the channel.')
     except Exception as e:
         logging.error(f"Error handling /start command: {e}")
-        update.message.reply_text('An error occurred. Please try again later.')
-
-# Show file information
-def show_file_info(update: Update, shorten_url: str):
-    try:
-        # Example data
-        directory_photo = "https://example.com/directory_photo.jpg"
-        file_name = "Example File"
-        how_to_open_video_link = "https://example.com/how_to_open_video"
-
-        # Format message with embedded URL
-        message = (
-            f'<a href="{directory_photo}">&#8205;</a>\n'
-            f'File Name: {file_name}\n'
-            f'Link is here: <a href="{shorten_url}">Click here</a>\n'
-            f'How to Open Video: <a href="{how_to_open_video_link}">Click here</a>'
-        )
-
-        update.message.reply_text(message, parse_mode='HTML')
-    except Exception as e:
-        logging.error(f"Error sending file info: {e}")
         update.message.reply_text('An error occurred. Please try again later.')
 
 # Add handlers to dispatcher
@@ -86,9 +65,13 @@ dispatcher.add_handler(CommandHandler('start', start))
 # Webhook route
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    update = Update.de_json(request.get_json(force=True), bot)
-    dispatcher.process_update(update)
-    return 'ok', 200
+    try:
+        update = Update.de_json(request.get_json(force=True), bot)
+        dispatcher.process_update(update)
+        return 'ok', 200
+    except Exception as e:
+        logging.error(f'Error processing update: {e}')
+        return 'error', 500
 
 # Home route
 @app.route('/')
