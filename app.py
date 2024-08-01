@@ -18,7 +18,7 @@ if not TELEGRAM_TOKEN or not WEBHOOK_URL or not FILE_OPENER_BOT_USERNAME:
 bot = Bot(token=TELEGRAM_TOKEN)
 dispatcher = Dispatcher(bot, None, workers=0)
 
-# Define the handler for incoming requests with shortened URL
+# Define the start command handler
 def start(update: Update, context: CallbackContext):
     # Extract the shortened URL from the `start` parameter
     if context.args:
