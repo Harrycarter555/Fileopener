@@ -20,6 +20,12 @@ dispatcher = Dispatcher(bot, None, workers=0)
 
 # Define the start command handler
 def start(update: Update, context: CallbackContext):
+    # This handler is not needed for external users
+    pass
+
+# Define the link handler
+def handle_link(update: Update, context: CallbackContext):
+    # Extract the link from the start parameter
     if context.args:
         shortened_url = context.args[0]  # Extract shortened URL from the command argument
         file_name = "Sample File Name"  # Example file name, replace with actual logic
@@ -38,10 +44,11 @@ def start(update: Update, context: CallbackContext):
         # Send the photo and message to the user
         bot.send_photo(chat_id=update.message.chat_id, photo=PHOTO_URL, caption=message)
     else:
-        update.message.reply_text('Welcome! Please use the link provided in the channel.')
+        update.message.reply_text('Invalid link. Please use the correct link provided in the channel.')
 
 # Add handlers to dispatcher
-dispatcher.add_handler(CommandHandler('start', start))
+dispatcher.add_handler(CommandHandler('start', start))  # Not used in this case but kept for completeness
+dispatcher.add_handler(CommandHandler('handle_link', handle_link))  # Added for handling link
 
 # Webhook route
 @app.route('/webhook', methods=['POST'])
