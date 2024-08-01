@@ -1,47 +1,55 @@
 import os
 import requests
-from flask import Flask, request, send_from_directory
+from flask import Flask, request
 from telegram import Bot, Update
-from telegram.ext import Dispatcher, CommandHandler, CallbackContext
+from telegram.ext import Dispatcher, CommandHandler, CallbackContext, MessageHandler, Filters, ConversationHandler
 
 app = Flask(__name__)
 
 # Load configuration from environment variables
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
+URL_SHORTENER_API_KEY = os.getenv('URL_SHORTENER_API_KEY')
+CHANNEL_ID = os.getenv('CHANNEL_ID')
+FILE_OPENER_BOT_USERNAME = os.getenv('FILE_OPENER_BOT_USERNAME')
 
-if not TELEGRAM_TOKEN or not WEBHOOK_URL:
-    raise ValueError("TELEGRAM_TOKEN and WEBHOOK_URL environment variables are not set.")
+if not TELEGRAM_TOKEN or not WEBHOOK_URL or not URL_SHORTENER_API_KEY or not CHANNEL_ID or not FILE_OPENER_BOT_USERNAME:
+    raise ValueError("One or more environment variables are not set.")
 
 # Initialize Telegram bot
 bot = Bot(token=TELEGRAM_TOKEN)
 dispatcher = Dispatcher(bot, None, workers=0)
 
-# Define the start command handler
+# Handle the start command
 def start(update: Update, context: CallbackContext):
-    # Extract the shorten_url from the command argument
-    if context.args:
-        shorten_url = context.args[0]
-        
-        # Example data (You will replace these with actual data)
-        directory_photo = "https://example.com/photo.jpg"
-        file_name = "Sample File Name"
-        tutorial_link = "https://example.com/tutorial"
-
-        # Message formatting
-        message = (
-            f"Directory Photo: {directory_photo}\n\n"
-            f"File Name: {file_name}\n"
-            f"Link is Here: {shorten_url}\n"
-            f"How to Open Video: {tutorial_link}"
-        )
-        
-        # Send the message to the user with the photo and caption
-        update.message.reply_photo(photo=directory_photo, caption=message)
-        
-        # Implement URL shortener tracking and streaming logic here
+    # Extract the shortened URL from the start command data
+    if update.message.text.startswith('/start'):
+        command_data = update.message.text.split(' ', 1)
+        if len(command_data) > 1:
+            shorten_url = command_data[1]
+            show_file_info(update, shorten_url)
+        else:
+            update.message.reply_text('Welcome! Please use the link provided in the channel.')
     else:
-        update.message.reply_text("Invalid link provided.")
+        update.message.reply_text('Invalid command.')
+
+# Show file information
+def show_file_info(update: Update, shorten_url: str):
+    # You need to implement the logic to fetch the relevant details
+    # Example data for demonstration purposes
+    directory_photo = "https://example.com/directory_photo.jpg"
+    file_name = "Example File"
+    how_to_open_video_link = "https://example.com/how_to_open_video"
+
+    # Format message
+    message = (
+        f'<a href="{directory_photo}">&#8205;</a>\n'
+        f'File Name: {file_name}\n'
+        f'Link is here: {shorten_url}\n'
+        f'How to Open Video: {how_to_open_video_link}'
+    )
+
+    update.message.reply_text(message, parse_mode='HTML')
 
 # Add handlers to dispatcher
 dispatcher.add_handler(CommandHandler('start', start))
@@ -57,11 +65,6 @@ def webhook():
 @app.route('/')
 def home():
     return 'Hello, World!'
-
-# Favicon route
-@app.route('/favicon.ico')
-def favicon():
-    return send_from_directory(os.getcwd(), 'favicon.ico')
 
 # Webhook setup route
 @app.route('/setwebhook', methods=['GET', 'POST'])
