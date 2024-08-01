@@ -23,11 +23,11 @@ def start(update: Update, context: CallbackContext):
     if context.args:
         shortened_url = context.args[0]  # Extract shortened URL from command argument
         
-        # Example details
-        file_name = "Sample File Name"  # Replace with actual file name fetching logic
+        # Example details (Replace with actual logic to fetch these details)
+        file_name = "Sample File Name"  # Replace with actual file name
         how_to_open_video_link = "http://tutorial.example.com"  # Replace with actual tutorial link
         
-        # Example photo URL (same for all files)
+        # Directory photo URL (replace with actual photo URL)
         PHOTO_URL = 'https://example.com/path/to/photo.jpg'
         
         # Create a message with the file details
