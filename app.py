@@ -2,7 +2,7 @@ import os
 import requests
 from flask import Flask, request
 from telegram import Bot, Update
-from telegram.ext import Dispatcher, CommandHandler, CallbackContext, MessageHandler, Filters, ConversationHandler
+from telegram.ext import Dispatcher, CommandHandler, CallbackContext
 
 app = Flask(__name__)
 
@@ -23,23 +23,19 @@ dispatcher = Dispatcher(bot, None, workers=0)
 # Handle the start command
 def start(update: Update, context: CallbackContext):
     # Extract the shortened URL from the start command data
-    if update.message.text.startswith('/start'):
-        command_data = update.message.text.split(' ', 1)
-        if len(command_data) > 1:
-            shorten_url = command_data[1]
-            show_file_info(update, shorten_url)
-        else:
-            update.message.reply_text('Welcome! Please use the link provided in the channel.')
+    command_data = update.message.text.split(' ', 1)
+    if len(command_data) > 1:
+        shorten_url = command_data[1]
+        show_file_info(update, shorten_url)
     else:
-        update.message.reply_text('Invalid command.')
+        update.message.reply_text('Welcome! Please use the link provided in the channel.')
 
 # Show file information
 def show_file_info(update: Update, shorten_url: str):
-    # You need to implement the logic to fetch the relevant details
     # Example data for demonstration purposes
-    directory_photo = "https://example.com/directory_photo.jpg"
+    directory_photo = "https://example.com/directory_photo.jpg"  # You can use a placeholder or actual URL
     file_name = "Example File"
-    how_to_open_video_link = "https://example.com/how_to_open_video"
+    how_to_open_video_link = "https://example.com/how_to_open_video"  # You can use a placeholder or actual URL
 
     # Format message
     message = (
