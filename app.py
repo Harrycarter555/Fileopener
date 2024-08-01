@@ -49,9 +49,13 @@ dispatcher.add_handler(CommandHandler('start', start))
 # Webhook route
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    update = Update.de_json(request.get_json(force=True), bot)
-    dispatcher.process_update(update)
-    return 'ok', 200
+    try:
+        update = Update.de_json(request.get_json(force=True), bot)
+        dispatcher.process_update(update)
+        return 'ok', 200
+    except Exception as e:
+        print(f'Error processing update: {e}')
+        return 'error', 500
 
 # Home route
 @app.route('/')
