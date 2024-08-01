@@ -1,8 +1,8 @@
 import os
 import requests
 from flask import Flask, request, send_from_directory
-from telegram import Bot, Update, InputMediaPhoto
-from telegram.ext import Dispatcher, CommandHandler, CallbackContext, CallbackQueryHandler
+from telegram import Bot, Update
+from telegram.ext import Dispatcher, CommandHandler, CallbackContext
 
 app = Flask(__name__)
 
@@ -11,16 +11,8 @@ TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 FILE_OPENER_BOT_USERNAME = os.getenv('FILE_OPENER_BOT_USERNAME')
 
-missing_vars = []
-if not TELEGRAM_TOKEN:
-    missing_vars.append('TELEGRAM_TOKEN')
-if not WEBHOOK_URL:
-    missing_vars.append('WEBHOOK_URL')
-if not FILE_OPENER_BOT_USERNAME:
-    missing_vars.append('FILE_OPENER_BOT_USERNAME')
-
-if missing_vars:
-    raise ValueError(f"Missing environment variables: {', '.join(missing_vars)}")
+if not TELEGRAM_TOKEN or not WEBHOOK_URL or not FILE_OPENER_BOT_USERNAME:
+    raise ValueError("One or more environment variables are not set.")
 
 # Initialize Telegram bot
 bot = Bot(token=TELEGRAM_TOKEN)
@@ -28,12 +20,10 @@ dispatcher = Dispatcher(bot, None, workers=0)
 
 # Define the start command handler
 def start(update: Update, context: CallbackContext):
-    # Check if there's a URL parameter in the start command
     if context.args:
-        link = context.args[0]
+        shortened_url = context.args[0]
         file_name = "Sample File Name"  # Replace with actual file name logic
-        shorten_link = link  # Shorten the URL if necessary
-        tutorial_link = "http://tutorial.example.com"  # Replace with actual tutorial link
+        how_to_open_video_link = "http://video.example.com"  # Replace with actual video tutorial link
 
         # Example photo URL (same for all files)
         PHOTO_URL = 'https://example.com/path/to/photo.jpg'
@@ -41,8 +31,8 @@ def start(update: Update, context: CallbackContext):
         # Create a message with the file details
         message = (
             f"File Name: {file_name}\n\n"
-            f"Link is Here:\n{shorten_link}\n\n"
-            f"How to Open Tutorial:\n{tutorial_link}"
+            f"Link is Here:\n{shortened_url}\n\n"
+            f"How to Open Video:\n{how_to_open_video_link}"
         )
 
         # Send the photo and message to the user
