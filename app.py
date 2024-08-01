@@ -58,7 +58,7 @@ def start(update: Update, context: CallbackContext):
             logging.info(f"Shortened URL: {shortened_link}")
 
             # Define photo URL and tutorial link
-            photo_url = 'https://example.com/photo.jpg'  # Replace with actual photo URL
+            photo_url = 'https://github.com/Harrycarter555/Fileopener/blob/main/IMG_20240801_223423_661.jpg'  # Replace with actual photo URL
             tutorial_link = 'https://example.com/tutorial'  # Replace with actual tutorial link
 
             # Send photo and formatted message
