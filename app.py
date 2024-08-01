@@ -1,7 +1,7 @@
 import os
 import requests
 from flask import Flask, request, send_from_directory
-from telegram import Bot, Update
+from telegram import Bot, Update, InputMediaPhoto
 from telegram.ext import Dispatcher, CommandHandler, CallbackContext
 
 app = Flask(__name__)
@@ -21,9 +21,9 @@ dispatcher = Dispatcher(bot, None, workers=0)
 # Define the start command handler
 def start(update: Update, context: CallbackContext):
     if context.args:
-        shortened_url = context.args[0]
-        file_name = "Sample File Name"  # Replace with actual file name logic
-        how_to_open_video_link = "http://video.example.com"  # Replace with actual video tutorial link
+        shortened_url = context.args[0]  # Extract shortened URL from the command argument
+        file_name = "Sample File Name"  # Example file name, replace with actual logic
+        how_to_open_video_link = "http://video.example.com"  # Example tutorial link
 
         # Example photo URL (same for all files)
         PHOTO_URL = 'https://example.com/path/to/photo.jpg'
