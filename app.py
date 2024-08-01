@@ -2,7 +2,7 @@ import os
 import requests
 from flask import Flask, request
 from telegram import Bot, Update
-from telegram.ext import Dispatcher, CommandHandler, CallbackContext
+from telegram.ext import Dispatcher, CommandHandler, CallbackContext, Updater
 
 app = Flask(__name__)
 
@@ -22,10 +22,9 @@ dispatcher = Dispatcher(bot, None, workers=0)
 
 # Handle the start command
 def start(update: Update, context: CallbackContext):
-    # Extract the shortened URL from the start command data
-    command_data = update.message.text.split(' ', 1)
-    if len(command_data) > 1:
-        shorten_url = command_data[1]
+    # Extract the start parameter (shortened URL)
+    if context.args:
+        shorten_url = context.args[0]
         show_file_info(update, shorten_url)
     else:
         update.message.reply_text('Welcome! Please use the link provided in the channel.')
@@ -41,8 +40,8 @@ def show_file_info(update: Update, shorten_url: str):
     message = (
         f'<a href="{directory_photo}">&#8205;</a>\n'
         f'File Name: {file_name}\n'
-        f'Link is here: {shorten_url}\n'
-        f'How to Open Video: {how_to_open_video_link}'
+        f'Link is here: <a href="{shorten_url}">Click here</a>\n'
+        f'How to Open Video: <a href="{how_to_open_video_link}">Click here</a>'
     )
 
     update.message.reply_text(message, parse_mode='HTML')
@@ -65,10 +64,9 @@ def home():
 # Webhook setup route
 @app.route('/setwebhook', methods=['GET', 'POST'])
 def setup_webhook():
-    webhook_url = f'{WEBHOOK_URL}'  # Ensure this URL is correct
     response = requests.post(
         f'https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook',
-        data={'url': webhook_url}
+        data={'url': WEBHOOK_URL}
     )
     if response.json().get('ok'):
         return "Webhook setup ok"
