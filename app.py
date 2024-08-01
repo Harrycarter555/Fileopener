@@ -48,7 +48,7 @@ def show_file_info(update: Update, shorten_url: str):
         file_name = "Example File"
         how_to_open_video_link = "https://example.com/how_to_open_video"
 
-        # Format message
+        # Format message with embedded URL
         message = (
             f'<a href="{directory_photo}">&#8205;</a>\n'
             f'File Name: {file_name}\n'
@@ -79,10 +79,9 @@ def home():
 # Webhook setup route
 @app.route('/setwebhook', methods=['GET', 'POST'])
 def setup_webhook():
-    webhook_url = f'{WEBHOOK_URL}'  # Ensure this URL is correct
     response = requests.post(
         f'https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook',
-        data={'url': webhook_url}
+        data={'url': WEBHOOK_URL}
     )
     if response.json().get('ok'):
         return "Webhook setup ok"
