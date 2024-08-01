@@ -1,7 +1,7 @@
 import os
 import requests
 from flask import Flask, request, send_from_directory
-from telegram import Bot, Update, InputMediaPhoto
+from telegram import Bot, Update
 from telegram.ext import Dispatcher, CommandHandler, CallbackContext
 
 app = Flask(__name__)
@@ -18,37 +18,47 @@ if not TELEGRAM_TOKEN or not WEBHOOK_URL or not FILE_OPENER_BOT_USERNAME:
 bot = Bot(token=TELEGRAM_TOKEN)
 dispatcher = Dispatcher(bot, None, workers=0)
 
-# Define the start command handler
-def start(update: Update, context: CallbackContext):
-    # This handler is not needed for external users
-    pass
-
-# Define the link handler
+# Define the handler for incoming links
 def handle_link(update: Update, context: CallbackContext):
-    # Extract the link from the start parameter
+    # Extract the shortened URL from the `start` parameter
     if context.args:
         shortened_url = context.args[0]  # Extract shortened URL from the command argument
-        file_name = "Sample File Name"  # Example file name, replace with actual logic
-        how_to_open_video_link = "http://video.example.com"  # Example tutorial link
-
+        
+        # Example file details
+        file_name = "Sample File Name"  # Replace with actual logic to fetch file name
+        how_to_open_video_link = "http://video.example.com"  # Replace with actual tutorial link
+        
+        # Fetch the original file URL from the shortened URL
+        original_url = resolve_shortened_url(shortened_url)
+        
         # Example photo URL (same for all files)
         PHOTO_URL = 'https://example.com/path/to/photo.jpg'
-
+        
         # Create a message with the file details
         message = (
             f"File Name: {file_name}\n\n"
-            f"Link is Here:\n{shortened_url}\n\n"
+            f"Link is Here:\n{original_url}\n\n"
             f"How to Open Video:\n{how_to_open_video_link}"
         )
-
+        
         # Send the photo and message to the user
         bot.send_photo(chat_id=update.message.chat_id, photo=PHOTO_URL, caption=message)
     else:
         update.message.reply_text('Invalid link. Please use the correct link provided in the channel.')
 
+def resolve_shortened_url(shortened_url: str) -> str:
+    try:
+        response = requests.get(shortened_url, allow_redirects=False)
+        if response.status_code == 302:  # If it's a redirect
+            original_url = response.headers.get('Location', '')
+            return original_url
+        return shortened_url
+    except requests.RequestException as e:
+        print(f"Request error: {e}")
+        return shortened_url
+
 # Add handlers to dispatcher
-dispatcher.add_handler(CommandHandler('start', start))  # Not used in this case but kept for completeness
-dispatcher.add_handler(CommandHandler('handle_link', handle_link))  # Added for handling link
+dispatcher.add_handler(CommandHandler('start', handle_link))  # Handles links with 'start' parameter
 
 # Webhook route
 @app.route('/webhook', methods=['POST'])
