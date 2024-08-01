@@ -18,18 +18,15 @@ if not TELEGRAM_TOKEN or not WEBHOOK_URL or not FILE_OPENER_BOT_USERNAME:
 bot = Bot(token=TELEGRAM_TOKEN)
 dispatcher = Dispatcher(bot, None, workers=0)
 
-# Define the handler for incoming links
-def handle_link(update: Update, context: CallbackContext):
+# Define the handler for incoming requests with shortened URL
+def start(update: Update, context: CallbackContext):
     # Extract the shortened URL from the `start` parameter
     if context.args:
         shortened_url = context.args[0]  # Extract shortened URL from the command argument
         
-        # Example file details
-        file_name = "Sample File Name"  # Replace with actual logic to fetch file name
+        # Example details
+        file_name = "Sample File Name"  # Replace with actual file name fetching logic
         how_to_open_video_link = "http://video.example.com"  # Replace with actual tutorial link
-        
-        # Fetch the original file URL from the shortened URL
-        original_url = resolve_shortened_url(shortened_url)
         
         # Example photo URL (same for all files)
         PHOTO_URL = 'https://example.com/path/to/photo.jpg'
@@ -37,7 +34,7 @@ def handle_link(update: Update, context: CallbackContext):
         # Create a message with the file details
         message = (
             f"File Name: {file_name}\n\n"
-            f"Link is Here:\n{original_url}\n\n"
+            f"Link is Here:\n{shortened_url}\n\n"
             f"How to Open Video:\n{how_to_open_video_link}"
         )
         
@@ -46,19 +43,8 @@ def handle_link(update: Update, context: CallbackContext):
     else:
         update.message.reply_text('Invalid link. Please use the correct link provided in the channel.')
 
-def resolve_shortened_url(shortened_url: str) -> str:
-    try:
-        response = requests.get(shortened_url, allow_redirects=False)
-        if response.status_code == 302:  # If it's a redirect
-            original_url = response.headers.get('Location', '')
-            return original_url
-        return shortened_url
-    except requests.RequestException as e:
-        print(f"Request error: {e}")
-        return shortened_url
-
 # Add handlers to dispatcher
-dispatcher.add_handler(CommandHandler('start', handle_link))  # Handles links with 'start' parameter
+dispatcher.add_handler(CommandHandler('start', start))
 
 # Webhook route
 @app.route('/webhook', methods=['POST'])
