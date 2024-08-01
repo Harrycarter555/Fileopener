@@ -48,9 +48,10 @@ def shorten_url(long_url: str) -> str:
 # Handle the start command
 def start(update: Update, context: CallbackContext):
     try:
-        if context.args:
-            # Extract and decode the URL from the start parameter
+        # Check if context.args contains necessary elements
+        if len(context.args) >= 2:
             encoded_url = context.args[0]
+            file_name = context.args[1]
             decoded_url = base64.urlsafe_b64decode(encoded_url + '==').decode('utf-8')
             logging.info(f"Decoded URL: {decoded_url}")
 
@@ -63,7 +64,7 @@ def start(update: Update, context: CallbackContext):
             tutorial_link = 'https://example.com/tutorial'  # Replace with actual tutorial link
 
             # Prepare the message with MarkdownV2 formatting
-            message = (f'📸 *File Name:* {context.args[1]}\n\n'
+            message = (f'📸 *File Name:* {file_name}\n\n'
                        f'🔗 *Link is Here:* [Here]({shortened_link})\n\n'
                        f'📘 *How to open Tutorial:* [Tutorial]({tutorial_link})')
 
@@ -73,7 +74,7 @@ def start(update: Update, context: CallbackContext):
             # Send the formatted message
             update.message.reply_text(message, parse_mode='MarkdownV2')
         else:
-            update.message.reply_text('Welcome! Please use the link provided in the channel.')
+            update.message.reply_text('Please provide both the encoded URL and file name in the command.')
     except Exception as e:
         logging.error(f"Error handling /start command: {e}")
         update.message.reply_text(f'An error occurred: {e}')
