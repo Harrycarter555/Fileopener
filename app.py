@@ -29,14 +29,15 @@ logging.basicConfig(level=logging.INFO)
 def start(update: Update, context: CallbackContext):
     try:
         if context.args:
+            # Extract and decode the URL from the start parameter
             encoded_url = context.args[0]
             decoded_url = unquote(encoded_url)
             logging.info(f"Decoded URL: {decoded_url}")
 
-            # Use the decoded URL to stream the file
+            # Stream or access the file using the decoded URL
             response = requests.get(decoded_url)
             if response.status_code == 200:
-                # Send the file URL to the user
+                # Assume the response is a direct link to the file
                 file_url = decoded_url
                 update.message.reply_text(f'Here is your file: {file_url}')
             else:
