@@ -2,7 +2,8 @@ import os
 import requests
 from flask import Flask, request
 from telegram import Bot, Update
-from telegram.ext import Dispatcher, CommandHandler, CallbackContext, Updater
+from telegram.ext import Dispatcher, CommandHandler, CallbackContext
+from urllib.parse import unquote
 
 app = Flask(__name__)
 
@@ -22,21 +23,21 @@ dispatcher = Dispatcher(bot, None, workers=0)
 
 # Handle the start command
 def start(update: Update, context: CallbackContext):
-    # Extract the start parameter (shortened URL)
     if context.args:
-        shorten_url = context.args[0]
+        encoded_url = context.args[0]
+        print(f"Received encoded URL: {encoded_url}")
+        shorten_url = unquote(encoded_url)
+        print(f"Decoded URL: {shorten_url}")
         show_file_info(update, shorten_url)
     else:
         update.message.reply_text('Welcome! Please use the link provided in the channel.')
 
 # Show file information
 def show_file_info(update: Update, shorten_url: str):
-    # Example data for demonstration purposes
-    directory_photo = "https://example.com/directory_photo.jpg"  # You can use a placeholder or actual URL
+    directory_photo = "https://example.com/directory_photo.jpg"
     file_name = "Example File"
-    how_to_open_video_link = "https://example.com/how_to_open_video"  # You can use a placeholder or actual URL
+    how_to_open_video_link = "https://example.com/how_to_open_video"
 
-    # Format message
     message = (
         f'<a href="{directory_photo}">&#8205;</a>\n'
         f'File Name: {file_name}\n'
