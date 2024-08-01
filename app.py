@@ -51,8 +51,12 @@ def start(update: Update, context: CallbackContext):
             decoded_url = unquote(encoded_url)
             logging.info(f"Decoded URL: {decoded_url}")
 
-            # Show file information or perform actions with the decoded URL
-            update.message.reply_text(f'Here is your link: {decoded_url}')
+            # Shorten the decoded URL
+            shortened_link = shorten_url(decoded_url)
+            logging.info(f"Shortened URL: {shortened_link}")
+
+            # Provide information with shortened URL
+            update.message.reply_text(f'Here is your shortened link: {shortened_link}')
         else:
             update.message.reply_text('Welcome! Please use the link provided in the channel.')
     except Exception as e:
