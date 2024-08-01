@@ -63,7 +63,7 @@ def start(update: Update, context: CallbackContext):
             tutorial_link = 'https://example.com/tutorial'  # Replace with actual tutorial link
 
             # Prepare the message with MarkdownV2 formatting
-            message = (f'📸 *File Name:* Your File Name Here\n\n'
+            message = (f'📸 *File Name:* {context.args[1]}\n\n'
                        f'🔗 *Link is Here:* [Here]({shortened_link})\n\n'
                        f'📘 *How to open Tutorial:* [Tutorial]({tutorial_link})')
 
