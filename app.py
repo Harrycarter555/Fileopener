@@ -20,13 +20,12 @@ dispatcher = Dispatcher(bot, None, workers=0)
 
 # Define the start command handler
 def start(update: Update, context: CallbackContext):
-    # Extract the shortened URL from the `start` parameter
     if context.args:
-        shortened_url = context.args[0]  # Extract shortened URL from the command argument
+        shortened_url = context.args[0]  # Extract shortened URL from command argument
         
         # Example details
         file_name = "Sample File Name"  # Replace with actual file name fetching logic
-        how_to_open_video_link = "http://video.example.com"  # Replace with actual tutorial link
+        how_to_open_video_link = "http://tutorial.example.com"  # Replace with actual tutorial link
         
         # Example photo URL (same for all files)
         PHOTO_URL = 'https://example.com/path/to/photo.jpg'
@@ -40,8 +39,10 @@ def start(update: Update, context: CallbackContext):
         
         # Send the photo and message to the user
         bot.send_photo(chat_id=update.message.chat_id, photo=PHOTO_URL, caption=message)
+        print(f"Sent photo and message to user: {update.message.chat_id}")
     else:
         update.message.reply_text('Invalid link. Please use the correct link provided in the channel.')
+        print(f"Invalid link received: {context.args}")
 
 # Add handlers to dispatcher
 dispatcher.add_handler(CommandHandler('start', start))
@@ -52,6 +53,7 @@ def webhook():
     try:
         update = Update.de_json(request.get_json(force=True), bot)
         dispatcher.process_update(update)
+        print(f"Update processed: {update}")
         return 'ok', 200
     except Exception as e:
         print(f'Error processing update: {e}')
