@@ -1,9 +1,10 @@
 import os
+import base64
 import requests
 from flask import Flask, request
 from telegram import Bot, Update
 from telegram.ext import Dispatcher, CommandHandler, CallbackContext
-from urllib.parse import unquote
+from urllib.parse import quote, unquote
 import logging
 
 app = Flask(__name__)
@@ -11,8 +12,9 @@ app = Flask(__name__)
 # Load configuration from environment variables
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
+URL_SHORTENER_API_KEY = os.getenv('URL_SHORTENER_API_KEY')
 
-if not TELEGRAM_TOKEN or not WEBHOOK_URL:
+if not TELEGRAM_TOKEN or not WEBHOOK_URL or not URL_SHORTENER_API_KEY:
     raise ValueError("One or more environment variables are not set.")
 
 # Initialize Telegram bot
@@ -22,16 +24,43 @@ dispatcher = Dispatcher(bot, None, workers=0)
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
+# Function to shorten URL
+def shorten_url(long_url: str) -> str:
+    api_token = URL_SHORTENER_API_KEY
+    encoded_url = quote(long_url)  # URL encode the long URL
+    api_url = f"https://publicearn.com/api?api={api_token}&url={encoded_url}"
+
+    try:
+        response = requests.get(api_url)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        
+        response_data = response.json()
+        if response_data.get("status") == "success":
+            short_url = response_data.get("shortenedUrl", "")
+            if short_url:
+                return short_url
+        logging.error("Unexpected response format")
+        return long_url
+    except requests.RequestException as e:
+        logging.error(f"Request error: {e}")
+        return long_url
+
 # Handle the start command
 def start(update: Update, context: CallbackContext):
     try:
         if context.args:
             encoded_url = context.args[0]
-            decoded_url = unquote(encoded_url)
+            decoded_url = base64.urlsafe_b64decode(encoded_url + '==').decode('utf-8')
             logging.info(f"Decoded URL: {decoded_url}")
 
-            # Stream or process the file from the decoded URL
-            update.message.reply_text(f'Here is your file: {decoded_url}')
+            # Shorten the decoded URL
+            shortened_link = shorten_url(decoded_url)
+            logging.info(f"Shortened URL: {shortened_link}")
+
+            # Provide formatted response
+            message = (f'Link is Here:\n{shortened_link}\n\n'
+                       f'Here is your file: {decoded_url}')
+            update.message.reply_text(message)
         else:
             update.message.reply_text('Welcome! Please use the link provided in the channel.')
     except Exception as e:
