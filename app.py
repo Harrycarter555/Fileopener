@@ -2,7 +2,7 @@ import os
 import base64
 import requests
 from flask import Flask, request
-from telegram import Bot, Update, InputMediaPhoto
+from telegram import Bot, Update
 from telegram.ext import Dispatcher, CommandHandler, CallbackContext
 from urllib.parse import quote
 import logging
@@ -27,7 +27,7 @@ logging.basicConfig(level=logging.INFO)
 # Function to shorten URL
 def shorten_url(long_url: str) -> str:
     api_token = URL_SHORTENER_API_KEY
-    encoded_url = quote(long_url)  # URL encode the long URL
+    encoded_url = requests.utils.quote(long_url)  # URL encode the long URL
     api_url = f"https://publicearn.com/api?api={api_token}&url={encoded_url}"
 
     try:
@@ -49,6 +49,7 @@ def shorten_url(long_url: str) -> str:
 def start(update: Update, context: CallbackContext):
     try:
         if context.args:
+            # Extract and decode the URL from the start parameter
             encoded_url = context.args[0]
             decoded_url = base64.urlsafe_b64decode(encoded_url + '==').decode('utf-8')
             logging.info(f"Decoded URL: {decoded_url}")
@@ -58,20 +59,24 @@ def start(update: Update, context: CallbackContext):
             logging.info(f"Shortened URL: {shortened_link}")
 
             # Define photo URL and tutorial link
-            photo_url = 'https://github.com/Harrycarter555/Fileopener/blob/main/IMG_20240801_223423_661.jpg'  # Replace with actual photo URL
+            photo_url = 'https://github.com/Harrycarter555/Fileopener/blob/main/IMG_20240801_223423_661.jpg'
             tutorial_link = 'https://example.com/tutorial'  # Replace with actual tutorial link
 
-            # Send photo and formatted message
-            bot.send_photo(chat_id=update.message.chat_id, photo=photo_url, caption="File Name")
+            # Prepare the message
+            message = (f'📂 **File Name:** Your File Name Here\n\n'
+                       f'🔗 **Link is Here:**\n{shortened_link}\n\n'
+                       f'📘 **How to open Tutorial:**\n{tutorial_link}')
 
-            message = (f'Link is Here:\n{shortened_link}\n\n'
-                       f'How to open Tutorial:\n{tutorial_link}')
-            update.message.reply_text(message)
+            # Send the photo first
+            bot.send_photo(chat_id=update.message.chat_id, photo=photo_url)
+
+            # Send the formatted message
+            update.message.reply_text(message, parse_mode='MarkdownV2')
         else:
             update.message.reply_text('Welcome! Please use the link provided in the channel.')
     except Exception as e:
         logging.error(f"Error handling /start command: {e}")
-        update.message.reply_text('An error occurred. Please try again later.')
+        update.message.reply_text(f'An error occurred: {e}')
 
 # Add handlers to dispatcher
 dispatcher.add_handler(CommandHandler('start', start))
