@@ -11,11 +11,8 @@ app = Flask(__name__)
 # Load configuration from environment variables
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
-URL_SHORTENER_API_KEY = os.getenv('URL_SHORTENER_API_KEY')
-CHANNEL_ID = os.getenv('CHANNEL_ID')
-FILE_OPENER_BOT_USERNAME = os.getenv('FILE_OPENER_BOT_USERNAME')
 
-if not TELEGRAM_TOKEN or not WEBHOOK_URL or not URL_SHORTENER_API_KEY or not CHANNEL_ID or not FILE_OPENER_BOT_USERNAME:
+if not TELEGRAM_TOKEN or not WEBHOOK_URL:
     raise ValueError("One or more environment variables are not set.")
 
 # Initialize Telegram bot
@@ -29,19 +26,12 @@ logging.basicConfig(level=logging.INFO)
 def start(update: Update, context: CallbackContext):
     try:
         if context.args:
-            # Extract and decode the URL from the start parameter
             encoded_url = context.args[0]
             decoded_url = unquote(encoded_url)
             logging.info(f"Decoded URL: {decoded_url}")
 
-            # Stream or access the file using the decoded URL
-            response = requests.get(decoded_url)
-            if response.status_code == 200:
-                # Assume the response is a direct link to the file
-                file_url = decoded_url
-                update.message.reply_text(f'Here is your file: {file_url}')
-            else:
-                update.message.reply_text('Failed to retrieve the file. The URL might be incorrect.')
+            # Stream or process the file from the decoded URL
+            update.message.reply_text(f'Here is your file: {decoded_url}')
         else:
             update.message.reply_text('Welcome! Please use the link provided in the channel.')
     except Exception as e:
@@ -61,6 +51,23 @@ def webhook():
     except Exception as e:
         logging.error(f'Error processing update: {e}')
         return 'error', 500
+
+# Home route
+@app.route('/')
+def home():
+    return 'Hello, World!'
+
+# Webhook setup route
+@app.route('/setwebhook', methods=['GET', 'POST'])
+def setup_webhook():
+    response = requests.post(
+        f'https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook',
+        data={'url': WEBHOOK_URL}
+    )
+    if response.json().get('ok'):
+        return "Webhook setup ok"
+    else:
+        return "Webhook setup failed"
 
 if __name__ == '__main__':
     app.run(port=5000)
