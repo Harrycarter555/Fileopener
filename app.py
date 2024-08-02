@@ -54,6 +54,7 @@ def encode_url_and_filename(url: str, filename: str) -> str:
 # Function to decode URL and filename
 def decode_url_and_filename(encoded_str: str) -> tuple:
     try:
+        # Ensure proper padding
         padded_encoded_str = encoded_str + '=='  # Add padding for base64 compliance
         decoded_bytes = base64.urlsafe_b64decode(padded_encoded_str)
         decoded_str = decoded_bytes.decode('utf-8')
