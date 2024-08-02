@@ -44,46 +44,54 @@ def shorten_url(long_url: str) -> str:
         logging.error(f"Request error: {e}")
         return long_url
 
+# Encode parameters
+def encode_start_params(url: str, file_name: str) -> str:
+    encoded_url = base64.urlsafe_b64encode(url.encode()).decode().rstrip('=')
+    encoded_file_name = base64.urlsafe_b64encode(file_name.encode()).decode().rstrip('=')
+    return f'{encoded_url}||{encoded_file_name}'
+
+# Decode parameters
+def decode_start_params(encoded_params: str) -> tuple:
+    try:
+        encoded_url, encoded_file_name = encoded_params.split('||')
+        decoded_url = base64.urlsafe_b64decode(encoded_url + '==').decode()
+        decoded_file_name = base64.urlsafe_b64decode(encoded_file_name + '==').decode()
+        return decoded_url, decoded_file_name
+    except Exception as e:
+        logging.error(f"Error decoding parameters: {e}")
+        raise ValueError("Invalid parameters")
+
 # Handle the start command
 def start(update: Update, context: CallbackContext):
     try:
-        # Extract URL and file name from the command
         query = update.message.text.split(' ', 1)[-1]
         params = dict(param.split('=') for param in query.split('&'))
-        encoded_url = params.get('start')
-        file_name = params.get('file_name')
+        encoded_params = params.get('start')
 
-        if encoded_url and file_name:
-            # Decode the URL from Base64
+        if encoded_params:
             try:
-                decoded_url = base64.urlsafe_b64decode(encoded_url + '==').decode('utf-8')
-            except Exception as e:
-                logging.error(f"Error decoding URL: {e}")
-                update.message.reply_text('Error decoding the URL.')
+                decoded_url, file_name = decode_start_params(encoded_params)
+            except ValueError:
+                update.message.reply_text('Error decoding parameters.')
                 return
 
             logging.info(f"Decoded URL: {decoded_url}")
+            logging.info(f"File Name: {file_name}")
 
-            # Shorten the decoded URL
             shortened_link = shorten_url(decoded_url)
             logging.info(f"Shortened URL: {shortened_link}")
 
-            # Define photo URL and tutorial link
             photo_url = 'https://github.com/Harrycarter555/Fileopener/blob/main/IMG_20240801_223423_661.jpg'
-            tutorial_link = 'https://example.com/tutorial'  # Replace with actual tutorial link
+            tutorial_link = 'https://example.com/tutorial'
 
-            # Prepare the message with MarkdownV2 formatting
             message = (f'📸 *File Name:* {file_name}\n\n'
                        f'🔗 *Link is Here:* [Here]({shortened_link})\n\n'
                        f'📘 *How to open Tutorial:* [Tutorial]({tutorial_link})')
 
-            # Send the photo first
             bot.send_photo(chat_id=update.message.chat_id, photo=photo_url)
-
-            # Send the formatted message
             update.message.reply_text(message, parse_mode='MarkdownV2')
         else:
-            update.message.reply_text('Please provide both the encoded URL and file name in the command.')
+            update.message.reply_text('Please provide the encoded parameters in the command.')
     except Exception as e:
         logging.error(f"Error handling /start command: {e}")
         update.message.reply_text('An error occurred. Please try again later.')
