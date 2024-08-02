@@ -13,7 +13,6 @@ TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 URL_SHORTENER_API_KEY = os.getenv('URL_SHORTENER_API_KEY')
 
-# Check if all environment variables are set
 if not TELEGRAM_TOKEN or not WEBHOOK_URL or not URL_SHORTENER_API_KEY:
     raise ValueError("One or more environment variables are not set.")
 
@@ -48,11 +47,13 @@ def shorten_url(long_url: str) -> str:
 # Handle the start command
 def start(update: Update, context: CallbackContext):
     try:
-        # Check if there are exactly two arguments: encoded URL and file name
-        if len(context.args) == 2:
-            encoded_url = context.args[0]
-            file_name = context.args[1]
+        # Extract URL and file name from the command
+        query = update.message.text.split(' ', 1)[-1]  # Extract the query part of the command
+        params = dict(param.split('=') for param in query.split('&'))
+        encoded_url = params.get('start')
+        file_name = params.get('file_name')
 
+        if encoded_url and file_name:
             # Decode the URL from Base64
             try:
                 decoded_url = base64.urlsafe_b64decode(encoded_url + '==').decode('utf-8')
