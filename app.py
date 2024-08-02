@@ -47,11 +47,12 @@ def shorten_url(long_url: str) -> str:
 # Handle the start command
 def start(update: Update, context: CallbackContext):
     try:
+        # Check if there are exactly two arguments: encoded URL and file name
         if len(context.args) == 2:
             encoded_url = context.args[0]
             file_name = context.args[1]
-            
-            # Decode the URL from base64
+
+            # Decode the URL from Base64
             decoded_url = base64.urlsafe_b64decode(encoded_url + '==').decode('utf-8')
             logging.info(f"Decoded URL: {decoded_url}")
 
@@ -74,11 +75,10 @@ def start(update: Update, context: CallbackContext):
             # Send the formatted message
             update.message.reply_text(message, parse_mode='MarkdownV2')
         else:
-            logging.warning(f"Missing arguments: {context.args}")
             update.message.reply_text('Please provide both the encoded URL and file name in the command.')
     except Exception as e:
         logging.error(f"Error handling /start command: {e}")
-        update.message.reply_text(f'An error occurred: {e}')
+        update.message.reply_text('An error occurred. Please try again later.')
 
 # Add handlers to dispatcher
 dispatcher.add_handler(CommandHandler('start', start))
