@@ -4,7 +4,6 @@ import requests
 from flask import Flask, request
 from telegram import Bot, Update
 from telegram.ext import Dispatcher, CommandHandler, CallbackContext
-from urllib.parse import quote
 import logging
 
 app = Flask(__name__)
@@ -48,7 +47,6 @@ def shorten_url(long_url: str) -> str:
 # Handle the start command
 def start(update: Update, context: CallbackContext):
     try:
-        # Check if context.args contains necessary elements
         if len(context.args) >= 2:
             encoded_url = context.args[0]
             file_name = context.args[1]
@@ -74,6 +72,7 @@ def start(update: Update, context: CallbackContext):
             # Send the formatted message
             update.message.reply_text(message, parse_mode='MarkdownV2')
         else:
+            logging.warning(f"Missing arguments: {context.args}")
             update.message.reply_text('Please provide both the encoded URL and file name in the command.')
     except Exception as e:
         logging.error(f"Error handling /start command: {e}")
