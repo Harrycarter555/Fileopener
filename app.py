@@ -66,10 +66,9 @@ def decode_start_params(encoded_params: str) -> tuple:
 def start(update: Update, context: CallbackContext):
     try:
         query = update.message.text.split(' ', 1)[-1]
-        params = dict(param.split('=') for param in query.split('&'))
-        encoded_params = params.get('start')
+        if query.startswith("start=="):
+            encoded_params = query[len("start=="):]
 
-        if encoded_params:
             try:
                 decoded_url, file_name = decode_start_params(encoded_params)
             except ValueError:
@@ -92,7 +91,7 @@ def start(update: Update, context: CallbackContext):
             bot.send_photo(chat_id=update.message.chat_id, photo=photo_url)
             update.message.reply_text(message, parse_mode='MarkdownV2')
         else:
-            update.message.reply_text('Please provide the encoded parameters in the command.')
+            update.message.reply_text('Invalid command format. Please use the correct format.')
     except Exception as e:
         logging.error(f"Error handling /start command: {e}")
         update.message.reply_text('An error occurred. Please try again later.')
@@ -100,7 +99,7 @@ def start(update: Update, context: CallbackContext):
 # Generate file opener URL
 def generate_file_opener_url(long_url: str, file_name: str) -> str:
     encoded_params = encode_start_params(long_url, file_name)
-    file_opener_url = f'https://t.me/{FILE_OPENER_BOT_USERNAME}?start={encoded_params}'
+    file_opener_url = f'https://t.me/{FILE_OPENER_BOT_USERNAME}?start=={encoded_params}'
     return file_opener_url
 
 # Example usage
