@@ -61,7 +61,7 @@ def decode_url_and_filename(encoded_str: str) -> tuple:
         if len(parts) == 2:
             return parts[0], parts[1]
         else:
-            return decoded_str, ""  # Return empty string if file name is missing
+            return "", ""  # Return empty strings if decoding fails
     except Exception as e:
         logging.error(f"Error decoding the string: {e}")
         return "", ""
@@ -96,14 +96,12 @@ def start(update: Update, context: CallbackContext):
             shortened_link = shorten_url(decoded_url)
             logging.info(f"Shortened URL: {shortened_link}")
 
-            # Define photo URL and tutorial link
+            # Define photo URL
             photo_url = 'https://raw.githubusercontent.com/Harrycarter555/Fileopener/main/IMG_20240801_223423_661.jpg'
-            tutorial_link = 'https://example.com/tutorial'  # Replace with actual tutorial link
 
             # Prepare the message with InlineKeyboardMarkup
             keyboard = [
-                [InlineKeyboardButton("🔗 Link is here", url=shortened_link)],
-                [InlineKeyboardButton("📘 How to open Tutorial", url=tutorial_link)]
+                [InlineKeyboardButton("🔗 Link is here", url=shortened_link)]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
 
