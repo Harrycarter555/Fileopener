@@ -54,7 +54,13 @@ def start(update: Update, context: CallbackContext):
                 
                 # Decode the Base64 encoded URL
                 padded_encoded_str = encoded_url + '=='  # Add padding for base64 compliance
-                decoded_url = base64.urlsafe_b64decode(padded_encoded_str).decode('utf-8')
+                try:
+                    decoded_url = base64.urlsafe_b64decode(padded_encoded_str).decode('utf-8')
+                except Exception as e:
+                    logging.error(f"Base64 decode error: {e}")
+                    update.message.reply_text('Error decoding URL.')
+                    return
+                
                 logging.info(f"Decoded URL: {decoded_url}")
 
                 # Shorten the decoded URL
