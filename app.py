@@ -91,7 +91,7 @@ def start(update: Update, context: CallbackContext):
                 logging.error(f"Base64 decoding error: {e}")
                 update.message.reply_text('Error decoding the encoded string.')
         else:
-            logging.warning(f"Missing arguments: {context.args}")
+            logging.warning(f"Incorrect number of arguments: {context.args}")
             update.message.reply_text('Please provide the encoded URL and file name in the command.')
     except Exception as e:
         logging.error(f"Error handling /start command: {e}")
