@@ -96,13 +96,14 @@ def start(update: Update, context: CallbackContext):
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
 
-            # Send the photo
-            bot.send_photo(chat_id=update.message.chat_id, photo=photo_url)
-
-            # Send the formatted message with inline keyboard
-            message = f'📸 *File Name:* {file_name}'
-
-            update.message.reply_text(message, parse_mode='MarkdownV2', reply_markup=reply_markup)
+            # Send the photo and message with inline keyboard
+            bot.send_photo(
+                chat_id=update.message.chat_id,
+                photo=photo_url,
+                caption=f'📸 *File Name:* {file_name}',
+                parse_mode='MarkdownV2',
+                reply_markup=reply_markup
+            )
         else:
             logging.warning(f"Incorrect number of arguments: {context.args}")
             update.message.reply_text('Please provide the encoded URL and file name in the command.')
