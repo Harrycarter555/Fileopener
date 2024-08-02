@@ -38,7 +38,7 @@ def shorten_url(long_url: str) -> str:
             short_url = response_data.get("shortenedUrl", "")
             if short_url:
                 return short_url
-        logging.error("Unexpected response format")
+        logging.error("Unexpected response format or empty shortened URL")
         return long_url
     except requests.RequestException as e:
         logging.error(f"Request error: {e}")
