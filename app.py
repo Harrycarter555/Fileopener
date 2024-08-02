@@ -25,10 +25,11 @@ dispatcher = Dispatcher(bot, None, workers=0)
 logging.basicConfig(level=logging.INFO)
 
 # Function to shorten URL
-def shorten_url(long_url: str) -> str:
+def shorten_url(long_url: str, file_name: str) -> str:
     api_token = URL_SHORTENER_API_KEY
     encoded_url = requests.utils.quote(long_url)
-    api_url = f"https://publicearn.com/api?api={api_token}&url={encoded_url}"
+    encoded_file_name = requests.utils.quote(file_name)
+    api_url = f"https://publicearn.com/api?api={api_token}&url={encoded_url}||{encoded_file_name}"
 
     try:
         response = requests.get(api_url)
@@ -65,31 +66,34 @@ def decode_start_params(encoded_params: str) -> tuple:
 # Handle the start command
 def start(update: Update, context: CallbackContext):
     try:
-        query = update.message.text.split(' ', 1)[-1]
-        if query.startswith("start=="):
-            encoded_params = query[len("start=="):]
+        query = update.message.text
+        if query.startswith("/start"):
+            encoded_params = query[len("/start "):]  # Get parameters after /start
 
-            try:
-                decoded_url, file_name = decode_start_params(encoded_params)
-            except ValueError:
-                update.message.reply_text('Error decoding parameters.')
-                return
+            if encoded_params:
+                try:
+                    decoded_url, file_name = decode_start_params(encoded_params)
+                except ValueError:
+                    update.message.reply_text('Error decoding parameters.')
+                    return
 
-            logging.info(f"Decoded URL: {decoded_url}")
-            logging.info(f"File Name: {file_name}")
+                logging.info(f"Decoded URL: {decoded_url}")
+                logging.info(f"File Name: {file_name}")
 
-            shortened_link = shorten_url(decoded_url)
-            logging.info(f"Shortened URL: {shortened_link}")
+                shortened_link = shorten_url(decoded_url, file_name)
+                logging.info(f"Shortened URL: {shortened_link}")
 
-            photo_url = 'https://github.com/Harrycarter555/Fileopener/blob/main/IMG_20240801_223423_661.jpg'
-            tutorial_link = 'https://example.com/tutorial'
+                photo_url = 'https://github.com/Harrycarter555/Fileopener/blob/main/IMG_20240801_223423_661.jpg'
+                tutorial_link = 'https://example.com/tutorial'
 
-            message = (f'📸 *File Name:* {file_name}\n\n'
-                       f'🔗 *Link is Here:* [Here]({shortened_link})\n\n'
-                       f'📘 *How to open Tutorial:* [Tutorial]({tutorial_link})')
+                message = (f'📸 *File Name:* {file_name}\n\n'
+                           f'🔗 *Link is Here:* [Here]({shortened_link})\n\n'
+                           f'📘 *How to open Tutorial:* [Tutorial]({tutorial_link})')
 
-            bot.send_photo(chat_id=update.message.chat_id, photo=photo_url)
-            update.message.reply_text(message, parse_mode='MarkdownV2')
+                bot.send_photo(chat_id=update.message.chat_id, photo=photo_url)
+                update.message.reply_text(message, parse_mode='MarkdownV2')
+            else:
+                update.message.reply_text('Please provide the encoded parameters in the command.')
         else:
             update.message.reply_text('Invalid command format. Please use the correct format.')
     except Exception as e:
@@ -99,7 +103,7 @@ def start(update: Update, context: CallbackContext):
 # Generate file opener URL
 def generate_file_opener_url(long_url: str, file_name: str) -> str:
     encoded_params = encode_start_params(long_url, file_name)
-    file_opener_url = f'https://t.me/{FILE_OPENER_BOT_USERNAME}?start=={encoded_params}'
+    file_opener_url = f'https://t.me/{FILE_OPENER_BOT_USERNAME}?start={encoded_params}'
     return file_opener_url
 
 # Example usage
