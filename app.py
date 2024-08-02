@@ -91,8 +91,8 @@ def start(update: Update, context: CallbackContext):
 
             # Prepare the message with MarkdownV2 formatting
             message = (f'📸 *File Name:* {file_name}\n\n'
-                       f'🔗 *Link is Here:* [Here]({shortened_link})\n\n'
-                       f'📘 *How to open Tutorial:* [Tutorial]({tutorial_link})')
+                       f'🔗 *Link is Here:* {shortened_link}\n\n'
+                       f'📘 *How to open Tutorial:* {tutorial_link}')
 
             # Send the photo first
             bot.send_photo(chat_id=update.message.chat_id, photo=photo_url)
