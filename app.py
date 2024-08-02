@@ -97,6 +97,17 @@ def start(update: Update, context: CallbackContext):
         logging.error(f"Error handling /start command: {e}")
         update.message.reply_text('An error occurred. Please try again later.')
 
+# Generate file opener URL
+def generate_file_opener_url(long_url: str, file_name: str) -> str:
+    encoded_params = encode_start_params(long_url, file_name)
+    file_opener_url = f'https://t.me/{FILE_OPENER_BOT_USERNAME}?start=={encoded_params}'
+    return file_opener_url
+
+# Example usage
+long_url = "https://publicearn.com/somefile"
+file_name = "example.txt"
+print("File Opener URL:", generate_file_opener_url(long_url, file_name))
+
 # Add handlers to dispatcher
 dispatcher.add_handler(CommandHandler('start', start))
 
