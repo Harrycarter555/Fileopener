@@ -56,7 +56,9 @@ def decode_url_and_filename(encoded_str: str) -> tuple:
     padded_encoded_str = encoded_str + '=='  # Add padding for base64 compliance
     decoded_bytes = base64.urlsafe_b64decode(padded_encoded_str)
     decoded_str = decoded_bytes.decode('utf-8')
-    return decoded_str.split('&&', 1) if '&&' in decoded_str else (decoded_str, "")
+    if '&&' in decoded_str:
+        return decoded_str.split('&&', 1)
+    return decoded_str, ""  # In case there's no '&&'
 
 # Handle the start command
 def start(update: Update, context: CallbackContext):
