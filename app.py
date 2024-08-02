@@ -25,15 +25,15 @@ dispatcher = Dispatcher(bot, None, workers=0)
 logging.basicConfig(level=logging.INFO)
 
 # Function to shorten URL
-def shorten_url(long_url: str, file_name: str) -> str:
+def shorten_url(long_url: str) -> str:
     api_token = URL_SHORTENER_API_KEY
     encoded_url = requests.utils.quote(long_url)
-    encoded_file_name = requests.utils.quote(file_name)
-    api_url = f"https://publicearn.com/api?api={api_token}&url={encoded_url}||{encoded_file_name}"
+    api_url = f"https://publicearn.com/api?api={api_token}&url={encoded_url}"
 
     try:
         response = requests.get(api_url)
         response.raise_for_status()
+        
         response_data = response.json()
         if response_data.get("status") == "success":
             short_url = response_data.get("shortenedUrl", "")
@@ -49,32 +49,28 @@ def shorten_url(long_url: str, file_name: str) -> str:
 def encode_start_params(url: str, file_name: str) -> str:
     encoded_url = base64.urlsafe_b64encode(url.encode()).decode().rstrip('=')
     encoded_file_name = base64.urlsafe_b64encode(file_name.encode()).decode().rstrip('=')
-    logging.info(f"Encoded URL: {encoded_url}")
-    logging.info(f"Encoded File Name: {encoded_file_name}")
     return f'{encoded_url}||{encoded_file_name}'
-    
+
 # Decode parameters
-def decode_start_params(encoded_params: str):
+def decode_start_params(encoded_params: str) -> tuple:
     try:
         padded_encoded_params = encoded_params + '=='
         decoded_bytes = base64.urlsafe_b64decode(padded_encoded_params)
         decoded_str = decoded_bytes.decode('utf-8')
         decoded_url, decoded_file_name = decoded_str.split('||', 1)
-        logging.info(f"Decoded URL: {decoded_url}")
-        logging.info(f"Decoded File Name: {decoded_file_name}")
         return decoded_url, decoded_file_name
     except Exception as e:
         logging.error(f"Error decoding parameters: {e}")
         return None, None
 
-# Define the start command handler
+# Handle the start command
 def start(update: Update, context: CallbackContext):
     try:
         if context.args and len(context.args) == 1:
             encoded_params = context.args[0]
             decoded_url, file_name = decode_start_params(encoded_params)
             if decoded_url and file_name:
-                shortened_link = shorten_url(decoded_url, file_name)
+                shortened_link = shorten_url(decoded_url)
                 update.message.reply_text(f'Here is your file link: {shortened_link}\n\nFile Name: {file_name}')
             else:
                 update.message.reply_text('Invalid parameters or decoding error.')
