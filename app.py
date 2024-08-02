@@ -38,7 +38,7 @@ def shorten_url(long_url: str) -> str:
             short_url = response_data.get("shortenedUrl", "")
             if short_url:
                 return short_url
-        logging.error("Unexpected response format")
+        logging.error("Unexpected response format or empty shortened URL")
         return long_url
     except requests.RequestException as e:
         logging.error(f"Request error: {e}")
@@ -48,7 +48,7 @@ def shorten_url(long_url: str) -> str:
 def start(update: Update, context: CallbackContext):
     try:
         # Extract URL and file name from the command
-        query = update.message.text.split(' ', 1)[-1]  # Extract the query part of the command
+        query = update.message.text.split(' ', 1)[-1]
         params = dict(param.split('=') for param in query.split('&'))
         encoded_url = params.get('start')
         file_name = params.get('file_name')
