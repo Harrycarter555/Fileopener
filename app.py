@@ -47,7 +47,7 @@ def shorten_url(long_url: str) -> str:
 
 # Function to encode URL and filename
 def encode_url_and_filename(url: str, filename: str) -> str:
-    combined_str = f"{url}||{filename}"
+    combined_str = f"{url}&&{filename}"
     encoded_bytes = base64.urlsafe_b64encode(combined_str.encode('utf-8'))
     return encoded_bytes.decode('utf-8').rstrip("=")
 
@@ -56,7 +56,7 @@ def decode_url_and_filename(encoded_str: str) -> tuple:
     padded_encoded_str = encoded_str + '=='  # Add padding for base64 compliance
     decoded_bytes = base64.urlsafe_b64decode(padded_encoded_str)
     decoded_str = decoded_bytes.decode('utf-8')
-    return decoded_str.split('||', 1) if '||' in decoded_str else (decoded_str, "")
+    return decoded_str.split('&&', 1) if '&&' in decoded_str else (decoded_str, "")
 
 # Handle the start command
 def start(update: Update, context: CallbackContext):
