@@ -47,7 +47,7 @@ def shorten_url(long_url: str) -> str:
 # Handle the start command
 def start(update: Update, context: CallbackContext):
     try:
-        if len(context.args) >= 2:
+        if len(context.args) == 2:
             encoded_url = context.args[0]
             file_name = context.args[1]
             decoded_url = base64.urlsafe_b64decode(encoded_url + '==').decode('utf-8')
