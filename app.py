@@ -47,36 +47,42 @@ def shorten_url(long_url: str) -> str:
 # Handle the start command
 def start(update: Update, context: CallbackContext):
     try:
-        if len(context.args) == 2:
-            encoded_url = context.args[0]
-            file_name = context.args[1]
-            
-            # Decode the URL
-            padded_encoded_str = encoded_url + '=='  # Add padding for base64 compliance
-            decoded_url = base64.urlsafe_b64decode(padded_encoded_str).decode('utf-8')
-            logging.info(f"Decoded URL: {decoded_url}")
+        # Ensure the command has at least one argument
+        if len(context.args) == 1:
+            # The argument is expected to be of the form "encoded_url||file_name"
+            command_data = context.args[0]
+            if '||' in command_data:
+                encoded_url, file_name = command_data.split('||', 1)
+                
+                # Decode the URL
+                padded_encoded_str = encoded_url + '=='  # Add padding for base64 compliance
+                decoded_url = base64.urlsafe_b64decode(padded_encoded_str).decode('utf-8')
+                logging.info(f"Decoded URL: {decoded_url}")
 
-            # Shorten the decoded URL
-            shortened_link = shorten_url(decoded_url)
-            logging.info(f"Shortened URL: {shortened_link}")
+                # Shorten the decoded URL
+                shortened_link = shorten_url(decoded_url)
+                logging.info(f"Shortened URL: {shortened_link}")
 
-            # Define photo URL and tutorial link
-            photo_url = 'https://github.com/Harrycarter555/Fileopener/blob/main/IMG_20240801_223423_661.jpg'
-            tutorial_link = 'https://example.com/tutorial'  # Replace with actual tutorial link
+                # Define photo URL and tutorial link
+                photo_url = 'https://github.com/Harrycarter555/Fileopener/blob/main/IMG_20240801_223423_661.jpg'
+                tutorial_link = 'https://example.com/tutorial'  # Replace with actual tutorial link
 
-            # Prepare the message with MarkdownV2 formatting
-            message = (f'📸 *File Name:* {file_name}\n\n'
-                       f'🔗 *Link is Here:* [Here]({shortened_link})\n\n'
-                       f'📘 *How to open Tutorial:* [Tutorial]({tutorial_link})')
+                # Prepare the message with MarkdownV2 formatting
+                message = (f'📸 *File Name:* {file_name}\n\n'
+                           f'🔗 *Link is Here:* [Here]({shortened_link})\n\n'
+                           f'📘 *How to open Tutorial:* [Tutorial]({tutorial_link})')
 
-            # Send the photo first
-            bot.send_photo(chat_id=update.message.chat_id, photo=photo_url)
+                # Send the photo first
+                bot.send_photo(chat_id=update.message.chat_id, photo=photo_url)
 
-            # Send the formatted message
-            update.message.reply_text(message, parse_mode='MarkdownV2')
+                # Send the formatted message
+                update.message.reply_text(message, parse_mode='MarkdownV2')
+            else:
+                logging.warning(f"Invalid format: {command_data}")
+                update.message.reply_text('The format of the command is incorrect. Use: /start <encoded_url||file_name>')
         else:
-            logging.warning(f"Missing arguments: {context.args}")
-            update.message.reply_text('Please provide both the encoded URL and file name in the command.')
+            logging.warning(f"Missing argument: {context.args}")
+            update.message.reply_text('Please provide the encoded URL and file name in the correct format.')
     except Exception as e:
         logging.error(f"Error handling /start command: {e}")
         update.message.reply_text(f'An error occurred: {e}')
