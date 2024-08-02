@@ -54,7 +54,13 @@ def start(update: Update, context: CallbackContext):
             file_name = context.args[1]
 
             # Decode the URL from Base64
-            decoded_url = base64.urlsafe_b64decode(encoded_url + '==').decode('utf-8')
+            try:
+                decoded_url = base64.urlsafe_b64decode(encoded_url + '==').decode('utf-8')
+            except Exception as e:
+                logging.error(f"Error decoding URL: {e}")
+                update.message.reply_text('Error decoding the URL.')
+                return
+
             logging.info(f"Decoded URL: {decoded_url}")
 
             # Shorten the decoded URL
