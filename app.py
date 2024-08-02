@@ -13,6 +13,7 @@ TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 URL_SHORTENER_API_KEY = os.getenv('URL_SHORTENER_API_KEY')
 
+# Check if all environment variables are set
 if not TELEGRAM_TOKEN or not WEBHOOK_URL or not URL_SHORTENER_API_KEY:
     raise ValueError("One or more environment variables are not set.")
 
