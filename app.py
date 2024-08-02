@@ -53,14 +53,18 @@ def encode_url_and_filename(url: str, filename: str) -> str:
 
 # Function to decode URL and filename
 def decode_url_and_filename(encoded_str: str) -> tuple:
-    padded_encoded_str = encoded_str + '=='  # Add padding for base64 compliance
-    decoded_bytes = base64.urlsafe_b64decode(padded_encoded_str)
-    decoded_str = decoded_bytes.decode('utf-8')
-    parts = decoded_str.split('&&', 1)
-    if len(parts) == 2:
-        return parts[0], parts[1]
-    else:
-        return decoded_str, ""  # Return empty string if file name is missing
+    try:
+        padded_encoded_str = encoded_str + '=='  # Add padding for base64 compliance
+        decoded_bytes = base64.urlsafe_b64decode(padded_encoded_str)
+        decoded_str = decoded_bytes.decode('utf-8')
+        parts = decoded_str.split('&&', 1)
+        if len(parts) == 2:
+            return parts[0], parts[1]
+        else:
+            return decoded_str, ""  # Return empty string if file name is missing
+    except Exception as e:
+        logging.error(f"Error decoding the string: {e}")
+        return "", ""
 
 # Handle the start command
 def start(update: Update, context: CallbackContext):
@@ -69,32 +73,32 @@ def start(update: Update, context: CallbackContext):
             encoded_str = context.args[0]
             logging.info(f"Received encoded string: {encoded_str}")
 
-            try:
-                decoded_url, file_name = decode_url_and_filename(encoded_str)
-                logging.info(f"Decoded URL: {decoded_url}")
-                logging.info(f"File Name: {file_name}")
-
-                # Shorten the URL
-                shortened_link = shorten_url(decoded_url)
-                logging.info(f"Shortened URL: {shortened_link}")
-
-                # Define photo URL and tutorial link
-                photo_url = 'https://github.com/Harrycarter555/Fileopener/blob/main/IMG_20240801_223423_661.jpg'
-                tutorial_link = 'https://example.com/tutorial'  # Replace with actual tutorial link
-
-                # Prepare the message with MarkdownV2 formatting
-                message = (f'📸 *File Name:* {file_name}\n\n'
-                           f'🔗 *Link is Here:* [Here]({shortened_link})\n\n'
-                           f'📘 *How to open Tutorial:* [Tutorial]({tutorial_link})')
-
-                # Send the photo first
-                bot.send_photo(chat_id=update.message.chat_id, photo=photo_url)
-
-                # Send the formatted message
-                update.message.reply_text(message, parse_mode='MarkdownV2')
-            except (base64.binascii.Error, UnicodeDecodeError) as e:
-                logging.error(f"Base64 decoding error: {e}")
+            decoded_url, file_name = decode_url_and_filename(encoded_str)
+            if not decoded_url:
                 update.message.reply_text('Error decoding the encoded string.')
+                return
+
+            logging.info(f"Decoded URL: {decoded_url}")
+            logging.info(f"File Name: {file_name}")
+
+            # Shorten the URL
+            shortened_link = shorten_url(decoded_url)
+            logging.info(f"Shortened URL: {shortened_link}")
+
+            # Define photo URL and tutorial link
+            photo_url = 'https://github.com/Harrycarter555/Fileopener/blob/main/IMG_20240801_223423_661.jpg'
+            tutorial_link = 'https://example.com/tutorial'  # Replace with actual tutorial link
+
+            # Prepare the message with MarkdownV2 formatting
+            message = (f'📸 *File Name:* {file_name}\n\n'
+                       f'🔗 *Link is Here:* [Here]({shortened_link})\n\n'
+                       f'📘 *How to open Tutorial:* [Tutorial]({tutorial_link})')
+
+            # Send the photo first
+            bot.send_photo(chat_id=update.message.chat_id, photo=photo_url)
+
+            # Send the formatted message
+            update.message.reply_text(message, parse_mode='MarkdownV2')
         else:
             logging.warning(f"Incorrect number of arguments: {context.args}")
             update.message.reply_text('Please provide the encoded URL and file name in the command.')
