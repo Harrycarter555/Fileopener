@@ -100,9 +100,7 @@ def start(update: Update, context: CallbackContext):
             bot.send_photo(chat_id=update.message.chat_id, photo=photo_url)
 
             # Send the formatted message with inline keyboard
-            message = (f'📸 *File Name:* {file_name}\n\n'
-                       f'🔗 [Link is here]({shortened_link})\n\n'
-                       f'📘 [How to open Tutorial]({tutorial_link})')
+            message = f'📸 *File Name:* {file_name}'
 
             update.message.reply_text(message, parse_mode='MarkdownV2', reply_markup=reply_markup)
         else:
