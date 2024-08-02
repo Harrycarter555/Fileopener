@@ -27,12 +27,12 @@ logging.basicConfig(level=logging.INFO)
 # Function to shorten URL
 def shorten_url(long_url: str) -> str:
     api_token = URL_SHORTENER_API_KEY
-    encoded_url = requests.utils.quote(long_url)  # URL encode the long URL
+    encoded_url = requests.utils.quote(long_url)
     api_url = f"https://publicearn.com/api?api={api_token}&url={encoded_url}"
 
     try:
         response = requests.get(api_url)
-        response.raise_for_status()  # Raise an exception for HTTP errors
+        response.raise_for_status()
         
         response_data = response.json()
         if response_data.get("status") == "success":
@@ -100,7 +100,7 @@ def start(update: Update, context: CallbackContext):
 # Generate file opener URL
 def generate_file_opener_url(long_url: str, file_name: str) -> str:
     encoded_params = encode_start_params(long_url, file_name)
-    file_opener_url = f'https://t.me/{FILE_OPENER_BOT_USERNAME}?start=={encoded_params}'
+    file_opener_url = f'https://t.me/{FILE_OPENER_BOT_USERNAME}?start={encoded_params}'
     return file_opener_url
 
 # Example usage
