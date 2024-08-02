@@ -50,7 +50,10 @@ def start(update: Update, context: CallbackContext):
         if len(context.args) == 2:
             encoded_url = context.args[0]
             file_name = context.args[1]
-            decoded_url = base64.urlsafe_b64decode(encoded_url + '==').decode('utf-8')
+            
+            # Decode the URL
+            padded_encoded_str = encoded_url + '=='  # Add padding for base64 compliance
+            decoded_url = base64.urlsafe_b64decode(padded_encoded_str).decode('utf-8')
             logging.info(f"Decoded URL: {decoded_url}")
 
             # Shorten the decoded URL
