@@ -34,7 +34,6 @@ def shorten_url(long_url: str, file_name: str) -> str:
     try:
         response = requests.get(api_url)
         response.raise_for_status()
-        
         response_data = response.json()
         if response_data.get("status") == "success":
             short_url = response_data.get("shortenedUrl", "")
@@ -50,69 +49,40 @@ def shorten_url(long_url: str, file_name: str) -> str:
 def encode_start_params(url: str, file_name: str) -> str:
     encoded_url = base64.urlsafe_b64encode(url.encode()).decode().rstrip('=')
     encoded_file_name = base64.urlsafe_b64encode(file_name.encode()).decode().rstrip('=')
+    logging.info(f"Encoded URL: {encoded_url}")
+    logging.info(f"Encoded File Name: {encoded_file_name}")
     return f'{encoded_url}||{encoded_file_name}'
-
+    
 # Decode parameters
-def decode_start_params(encoded_params: str) -> tuple:
+def decode_start_params(encoded_params: str):
     try:
-        encoded_url, encoded_file_name = encoded_params.split('||')
-        decoded_url = base64.urlsafe_b64decode(encoded_url + '==').decode()
-        decoded_file_name = base64.urlsafe_b64decode(encoded_file_name + '==').decode()
+        padded_encoded_params = encoded_params + '=='
+        decoded_bytes = base64.urlsafe_b64decode(padded_encoded_params)
+        decoded_str = decoded_bytes.decode('utf-8')
+        decoded_url, decoded_file_name = decoded_str.split('||', 1)
+        logging.info(f"Decoded URL: {decoded_url}")
+        logging.info(f"Decoded File Name: {decoded_file_name}")
         return decoded_url, decoded_file_name
     except Exception as e:
         logging.error(f"Error decoding parameters: {e}")
-        raise ValueError("Invalid parameters")
+        return None, None
 
-# Handle the start command
+# Define the start command handler
 def start(update: Update, context: CallbackContext):
     try:
-        query = update.message.text
-        if query.startswith("/start"):
-            encoded_params = query[len("/start "):]  # Get parameters after /start
-
-            if encoded_params:
-                try:
-                    decoded_url, file_name = decode_start_params(encoded_params)
-                except ValueError:
-                    update.message.reply_text('Error decoding parameters.')
-                    return
-
-                logging.info(f"Decoded URL: {decoded_url}")
-                logging.info(f"File Name: {file_name}")
-
+        if context.args and len(context.args) == 1:
+            encoded_params = context.args[0]
+            decoded_url, file_name = decode_start_params(encoded_params)
+            if decoded_url and file_name:
                 shortened_link = shorten_url(decoded_url, file_name)
-                logging.info(f"Shortened URL: {shortened_link}")
-
-                photo_url = 'https://github.com/Harrycarter555/Fileopener/blob/main/IMG_20240801_223423_661.jpg'
-                tutorial_link = 'https://example.com/tutorial'
-
-                message = (f'📸 *File Name:* {file_name}\n\n'
-                           f'🔗 *Link is Here:* [Here]({shortened_link})\n\n'
-                           f'📘 *How to open Tutorial:* [Tutorial]({tutorial_link})')
-
-                bot.send_photo(chat_id=update.message.chat_id, photo=photo_url)
-                update.message.reply_text(message, parse_mode='MarkdownV2')
+                update.message.reply_text(f'Here is your file link: {shortened_link}\n\nFile Name: {file_name}')
             else:
-                update.message.reply_text('Please provide the encoded parameters in the command.')
+                update.message.reply_text('Invalid parameters or decoding error.')
         else:
-            update.message.reply_text('Invalid command format. Please use the correct format.')
+            update.message.reply_text('Please provide the encoded parameters.')
     except Exception as e:
         logging.error(f"Error handling /start command: {e}")
         update.message.reply_text('An error occurred. Please try again later.')
-
-# Generate file opener URL
-def generate_file_opener_url(long_url: str, file_name: str) -> str:
-    encoded_params = encode_start_params(long_url, file_name)
-    file_opener_url = f'https://t.me/{FILE_OPENER_BOT_USERNAME}?start={encoded_params}'
-    return file_opener_url
-
-# Example usage
-long_url = "https://publicearn.com/somefile"
-file_name = "example.txt"
-print("File Opener URL:", generate_file_opener_url(long_url, file_name))
-
-# Add handlers to dispatcher
-dispatcher.add_handler(CommandHandler('start', start))
 
 # Webhook route
 @app.route('/webhook', methods=['POST'])
@@ -143,4 +113,4 @@ def setup_webhook():
         return "Webhook setup failed"
 
 if __name__ == '__main__':
-    app.run(port=5000, threaded=True)
+    app.run(port=5001, threaded=True)
