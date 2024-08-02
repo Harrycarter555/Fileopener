@@ -2,7 +2,7 @@ import os
 import base64
 import requests
 from flask import Flask, request
-from telegram import Bot, Update
+from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Dispatcher, CommandHandler, CallbackContext
 import logging
 
@@ -89,16 +89,19 @@ def start(update: Update, context: CallbackContext):
             photo_url = 'https://raw.githubusercontent.com/Harrycarter555/Fileopener/main/IMG_20240801_223423_661.jpg'
             tutorial_link = 'https://example.com/tutorial'  # Replace with actual tutorial link
 
-            # Prepare the message with MarkdownV2 formatting
-            message = (f'📸 *File Name:* {file_name}\n\n'
-                       f'🔗 *Link is Here:* {shortened_link}\n\n'
-                       f'📘 *How to open Tutorial:* {tutorial_link}')
+            # Create inline keyboard
+            keyboard = [
+                [InlineKeyboardButton("Shortened Link 🔗", url=shortened_link)],
+                [InlineKeyboardButton("How to Open Tutorial 📘", url=tutorial_link)]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
 
             # Send the photo first
             bot.send_photo(chat_id=update.message.chat_id, photo=photo_url)
 
-            # Send the formatted message
-            update.message.reply_text(message, parse_mode='MarkdownV2')
+            # Send the formatted message with the inline keyboard
+            message = f'📸 *File Name:* {file_name}\n\n'
+            update.message.reply_text(message, parse_mode='MarkdownV2', reply_markup=reply_markup)
         else:
             logging.warning(f"Incorrect number of arguments: {context.args}")
             update.message.reply_text('Please provide the encoded URL and file name in the command.')
