@@ -66,6 +66,17 @@ def decode_url_and_filename(encoded_str: str) -> tuple:
         logging.error(f"Error decoding the string: {e}")
         return "", ""
 
+# Function to escape MarkdownV2 characters
+def escape_markdown_v2(text: str) -> str:
+    replacements = {
+        '_': r'\_', '*': r'\*', '[': r'\[', ']': r'\]', '(': r'\(', ')': r'\)', '~': r'\~', '`': r'\`',
+        '>': r'\>', '#': r'\#', '+': r'\+', '-': r'\-', '=': r'\=', '|': r'\|', '{': r'\{', '}': r'\}',
+        '.': r'\.', '!': r'\!'
+    }
+    for char, replacement in replacements.items():
+        text = text.replace(char, replacement)
+    return text
+
 # Handle the start command
 def start(update: Update, context: CallbackContext):
     try:
@@ -96,11 +107,14 @@ def start(update: Update, context: CallbackContext):
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
 
+            # Escape file name for MarkdownV2
+            escaped_file_name = escape_markdown_v2(file_name)
+
             # Send the photo and message with inline keyboard
             bot.send_photo(
                 chat_id=update.message.chat_id,
                 photo=photo_url,
-                caption=f'📸 *File Name:* {file_name}',
+                caption=f'📸 *File Name:* {escaped_file_name}',
                 parse_mode='MarkdownV2',
                 reply_markup=reply_markup
             )
