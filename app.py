@@ -91,8 +91,8 @@ def start(update: Update, context: CallbackContext):
 
             # Prepare the message with InlineKeyboardMarkup
             keyboard = [
-                [InlineKeyboardButton("🔗 Link is here", url=shortened_link)],
-                [InlineKeyboardButton("📘 How to open Tutorial", url=tutorial_link)]
+                [InlineKeyboardButton(" Link is here 🔗", url=shortened_link)],
+                [InlineKeyboardButton(" How to open Tutorial 📘", url=tutorial_link)]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
 
