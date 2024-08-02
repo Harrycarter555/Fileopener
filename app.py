@@ -49,17 +49,18 @@ def shorten_url(long_url: str) -> str:
 def start(update: Update, context: CallbackContext):
     try:
         if len(context.args) == 1:
-            combined_encoded_str = context.args[0]
-            logging.info(f"Received encoded string: {combined_encoded_str}")
+            encoded_str = context.args[0]
+            logging.info(f"Received encoded string: {encoded_str}")
 
             # Decode the combined base64 string
-            padded_encoded_str = combined_encoded_str + '=='  # Add padding for base64 compliance
             try:
-                decoded_str = base64.urlsafe_b64decode(padded_encoded_str).decode('utf-8')
+                padded_encoded_str = encoded_str + '=='  # Add padding for base64 compliance
+                decoded_bytes = base64.urlsafe_b64decode(padded_encoded_str)
+                decoded_str = decoded_bytes.decode('utf-8')
                 logging.info(f"Decoded String: {decoded_str}")
-                
+
                 # Split into URL and file name using the delimiter
-                delimiter = '~'
+                delimiter = '||'
                 if delimiter in decoded_str:
                     decoded_url, file_name = decoded_str.split(delimiter, 1)
                     logging.info(f"Decoded URL: {decoded_url}")
@@ -85,7 +86,7 @@ def start(update: Update, context: CallbackContext):
                     update.message.reply_text(message, parse_mode='MarkdownV2')
                 else:
                     logging.warning(f"Invalid format: {decoded_str}")
-                    update.message.reply_text('Invalid format of the encoded string. Use: /start <encoded_url~file_name>')
+                    update.message.reply_text('Invalid format of the encoded string. Use: /start <encoded_url||file_name>')
             except (base64.binascii.Error, UnicodeDecodeError) as e:
                 logging.error(f"Base64 decoding error: {e}")
                 update.message.reply_text('Error decoding the encoded string.')
