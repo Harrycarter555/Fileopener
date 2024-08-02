@@ -12,9 +12,8 @@ app = Flask(__name__)
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 URL_SHORTENER_API_KEY = os.getenv('URL_SHORTENER_API_KEY')
-FILE_OPENER_BOT_USERNAME = os.getenv('FILE_OPENER_BOT_USERNAME')
 
-if not TELEGRAM_TOKEN or not WEBHOOK_URL or not URL_SHORTENER_API_KEY or not FILE_OPENER_BOT_USERNAME:
+if not TELEGRAM_TOKEN or not WEBHOOK_URL or not URL_SHORTENER_API_KEY:
     raise ValueError("One or more environment variables are not set.")
 
 # Initialize Telegram bot
@@ -49,22 +48,21 @@ def shorten_url(long_url: str) -> str:
 def start(update: Update, context: CallbackContext):
     try:
         if len(context.args) == 1:
-            command_data = context.args[0]
-            if '||' in command_data:
-                encoded_url, file_name = command_data.split('||', 1)
-                
-                # Decode the Base64 encoded URL
-                padded_encoded_str = encoded_url + '=='  # Add padding for base64 compliance
-                try:
-                    decoded_url = base64.urlsafe_b64decode(padded_encoded_str).decode('utf-8')
-                except Exception as e:
-                    logging.error(f"Base64 decode error: {e}")
-                    update.message.reply_text('Error decoding URL.')
-                    return
-                
+            combined_encoded_str = context.args[0]
+            
+            # Decode the combined base64 string
+            padded_encoded_str = combined_encoded_str + '=='  # Add padding for base64 compliance
+            decoded_str = base64.urlsafe_b64decode(padded_encoded_str).decode('utf-8')
+            logging.info(f"Decoded String: {decoded_str}")
+            
+            # Split into URL and file name using the delimiter
+            delimiter = '||'
+            if delimiter in decoded_str:
+                decoded_url, file_name = decoded_str.split(delimiter, 1)
                 logging.info(f"Decoded URL: {decoded_url}")
+                logging.info(f"File Name: {file_name}")
 
-                # Shorten the decoded URL
+                # Shorten the URL
                 shortened_link = shorten_url(decoded_url)
                 logging.info(f"Shortened URL: {shortened_link}")
 
@@ -83,11 +81,11 @@ def start(update: Update, context: CallbackContext):
                 # Send the formatted message
                 update.message.reply_text(message, parse_mode='MarkdownV2')
             else:
-                logging.warning(f"Invalid format: {command_data}")
-                update.message.reply_text('The format of the command is incorrect. Use: /start <encoded_url||file_name>')
+                logging.warning(f"Invalid format: {decoded_str}")
+                update.message.reply_text('Invalid format of the encoded string. Use: /start <encoded_url||file_name>')
         else:
-            logging.warning(f"Missing argument: {context.args}")
-            update.message.reply_text('Please provide the encoded URL and file name in the correct format.')
+            logging.warning(f"Missing arguments: {context.args}")
+            update.message.reply_text('Please provide the encoded URL and file name in the command.')
     except Exception as e:
         logging.error(f"Error handling /start command: {e}")
         update.message.reply_text(f'An error occurred: {e}')
