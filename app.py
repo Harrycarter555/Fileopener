@@ -47,14 +47,12 @@ def shorten_url(long_url: str) -> str:
 # Handle the start command
 def start(update: Update, context: CallbackContext):
     try:
-        # Ensure the command has at least one argument
         if len(context.args) == 1:
-            # The argument is expected to be of the form "encoded_url||file_name"
             command_data = context.args[0]
             if '||' in command_data:
                 encoded_url, file_name = command_data.split('||', 1)
                 
-                # Decode the URL
+                # Decode the Base64 encoded URL
                 padded_encoded_str = encoded_url + '=='  # Add padding for base64 compliance
                 decoded_url = base64.urlsafe_b64decode(padded_encoded_str).decode('utf-8')
                 logging.info(f"Decoded URL: {decoded_url}")
