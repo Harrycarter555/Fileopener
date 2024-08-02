@@ -1,9 +1,9 @@
 import os
 import base64
 import requests
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from telegram import Bot, Update
-from telegram.ext import Dispatcher, CommandHandler, CallbackContext
+from telegram.ext import Dispatcher, CommandHandler, CallbackContext, MessageHandler, Filters, ConversationHandler
 import logging
 
 app = Flask(__name__)
@@ -12,9 +12,10 @@ app = Flask(__name__)
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 URL_SHORTENER_API_KEY = os.getenv('URL_SHORTENER_API_KEY')
+CHANNEL_ID = os.getenv('CHANNEL_ID')
 FILE_OPENER_BOT_USERNAME = os.getenv('FILE_OPENER_BOT_USERNAME')
 
-if not TELEGRAM_TOKEN or not WEBHOOK_URL or not URL_SHORTENER_API_KEY or not FILE_OPENER_BOT_USERNAME:
+if not TELEGRAM_TOKEN or not WEBHOOK_URL or not URL_SHORTENER_API_KEY or not CHANNEL_ID or not FILE_OPENER_BOT_USERNAME:
     raise ValueError("One or more environment variables are not set.")
 
 # Initialize Telegram bot
@@ -23,6 +24,9 @@ dispatcher = Dispatcher(bot, None, workers=0)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
+
+# Increase the maximum content length to 2 GB
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024 * 1024  # 2 GB
 
 # Function to shorten URL
 def shorten_url(long_url: str) -> str:
@@ -45,68 +49,116 @@ def shorten_url(long_url: str) -> str:
         logging.error(f"Request error: {e}")
         return long_url
 
-# Function to encode URL and filename
-def encode_url_and_filename(url: str, filename: str) -> str:
-    combined_str = f"{url}&&{filename}"
-    encoded_bytes = base64.urlsafe_b64encode(combined_str.encode('utf-8'))
-    return encoded_bytes.decode('utf-8').rstrip("=")
+# Define states for conversation handler
+ASK_POST_CONFIRMATION, ASK_FILE_NAME = range(2)
 
-# Function to decode URL and filename
-def decode_url_and_filename(encoded_str: str) -> tuple:
-    try:
-        padded_encoded_str = encoded_str + '=='  # Add padding for base64 compliance
-        decoded_bytes = base64.urlsafe_b64decode(padded_encoded_str)
-        decoded_str = decoded_bytes.decode('utf-8')
-        parts = decoded_str.split('&&', 1)
-        if len(parts) == 2:
-            return parts[0], parts[1]
-        else:
-            return decoded_str, ""  # Return empty string if file name is missing
-    except Exception as e:
-        logging.error(f"Error decoding the string: {e}")
-        return "", ""
-
-# Handle the start command
+# Define the start command handler
 def start(update: Update, context: CallbackContext):
     try:
-        if len(context.args) == 1:
-            encoded_str = context.args[0]
-            logging.info(f"Received encoded string: {encoded_str}")
+        if context.args and len(context.args) == 1:
+            combined_encoded_str = context.args[0]
+            
+            # Decode the combined base64 string
+            padded_encoded_str = combined_encoded_str + '=='  # Add padding for base64 compliance
+            decoded_str = base64.urlsafe_b64decode(padded_encoded_str).decode('utf-8')
+            logging.info(f"Decoded String: {decoded_str}")
+            
+            # Split into URL and file name using the delimiter
+            delimiter = '&&'
+            if delimiter in decoded_str:
+                decoded_url, file_name = decoded_str.split(delimiter, 1)
+                logging.info(f"Decoded URL: {decoded_url}")
+                logging.info(f"File Name: {file_name}")
 
-            decoded_url, file_name = decode_url_and_filename(encoded_str)
-            if not decoded_url:
-                update.message.reply_text('Error decoding the encoded string.')
-                return
+                # Shorten the URL
+                shortened_link = shorten_url(decoded_url)
+                logging.info(f"Shortened URL: {shortened_link}")
 
-            logging.info(f"Decoded URL: {decoded_url}")
-            logging.info(f"File Name: {file_name}")
-
-            # Shorten the URL
-            shortened_link = shorten_url(decoded_url)
-            logging.info(f"Shortened URL: {shortened_link}")
-
-            # Define photo URL and tutorial link
-            photo_url = 'https://github.com/Harrycarter555/Fileopener/blob/main/IMG_20240801_223423_661.jpg'
-            tutorial_link = 'https://example.com/tutorial'  # Replace with actual tutorial link
-
-            # Prepare the message with MarkdownV2 formatting
-            message = (f'📸 *File Name:* {file_name}\n\n'
-                       f'🔗 *Link is Here:* [Here]({shortened_link})\n\n'
-                       f'📘 *How to open Tutorial:* [Tutorial]({tutorial_link})')
-
-            # Send the photo first
-            bot.send_photo(chat_id=update.message.chat_id, photo=photo_url)
-
-            # Send the formatted message
-            update.message.reply_text(message, parse_mode='MarkdownV2')
+                # Prepare and send message
+                message = (f'Here is your shortened link: {shortened_link}\n\n'
+                           f'File Name: {file_name}')
+                update.message.reply_text(message)
+            else:
+                update.message.reply_text('Invalid format of the encoded string.')
         else:
-            logging.warning(f"Incorrect number of arguments: {context.args}")
-            update.message.reply_text('Please provide the encoded URL and file name in the command.')
+            update.message.reply_text('Please provide the encoded string in the command.')
     except Exception as e:
         logging.error(f"Error handling /start command: {e}")
-        update.message.reply_text(f'An error occurred: {e}')
+        update.message.reply_text('An error occurred. Please try again later.')
+
+# Define the handler for document uploads
+def handle_document(update: Update, context: CallbackContext):
+    try:
+        update.message.reply_text('Processing your file, please wait...')
+        
+        file = update.message.document.get_file()
+        file_url = file.file_path
+        
+        logging.info(f"Received file URL: {file_url}")
+
+        short_url = shorten_url(file_url)
+        
+        logging.info(f"Shortened URL: {short_url}")
+        
+        if not short_url.startswith('http'):
+            raise ValueError("Shortened URL is invalid.")
+        
+        update.message.reply_text(f'File uploaded successfully. Here is your short link: {short_url}\n\nDo you want to post this link to the channel? (yes/no)')
+        
+        context.user_data['short_url'] = short_url
+        return ASK_POST_CONFIRMATION
+
+    except Exception as e:
+        logging.error(f"Error processing document: {e}")
+        update.message.reply_text('An error occurred while processing your file. Please try again later.')
+        return ConversationHandler.END
+
+# Post the shortened URL to the channel
+def post_to_channel(file_name: str, file_opener_url: str):
+    try:
+        message = (f'File Name: {file_name}\n'
+                   f'Access the file using this link: {file_opener_url}')
+        bot.send_message(chat_id=CHANNEL_ID, text=message)
+        logging.info(f"Posted to channel: {message}")
+    except Exception as e:
+        logging.error(f"Error posting to channel: {e}")
+
+# Define handlers for conversation
+def ask_post_confirmation(update: Update, context: CallbackContext):
+    user_response = update.message.text.lower()
+    
+    if user_response == 'yes':
+        update.message.reply_text('Please provide the file name:')
+        return ASK_FILE_NAME
+    elif user_response == 'no':
+        update.message.reply_text('The file was not posted.')
+        return ConversationHandler.END
+    else:
+        update.message.reply_text('Please respond with "yes" or "no".')
+        return ASK_POST_CONFIRMATION
+
+def ask_file_name(update: Update, context: CallbackContext):
+    file_name = update.message.text
+    short_url = context.user_data.get('short_url')
+    encoded_url = base64.urlsafe_b64encode(short_url.encode()).decode().rstrip('=')
+    file_opener_url = f'https://t.me/{FILE_OPENER_BOT_USERNAME}?start={encoded_url}&&{file_name}'
+
+    post_to_channel(file_name, file_opener_url)
+    
+    update.message.reply_text('File posted to channel successfully.')
+    return ConversationHandler.END
 
 # Add handlers to dispatcher
+conversation_handler = ConversationHandler(
+    entry_points=[MessageHandler(Filters.document, handle_document)],
+    states={
+        ASK_POST_CONFIRMATION: [MessageHandler(Filters.text & ~Filters.command, ask_post_confirmation)],
+        ASK_FILE_NAME: [MessageHandler(Filters.text & ~Filters.command, ask_file_name)],
+    },
+    fallbacks=[],
+)
+
+dispatcher.add_handler(conversation_handler)
 dispatcher.add_handler(CommandHandler('start', start))
 
 # Webhook route
