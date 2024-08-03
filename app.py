@@ -40,11 +40,6 @@ def shorten_url(long_url: str) -> str:
         logging.error(f"Request error: {e}")
     return long_url
 
-# Function to encode URL
-def encode_url(url: str) -> str:
-    encoded_bytes = base64.urlsafe_b64encode(url.encode('utf-8'))
-    return encoded_bytes.decode('utf-8').rstrip("=")
-
 # Function to decode URL
 def decode_url(encoded_str: str) -> str:
     try:
@@ -55,6 +50,26 @@ def decode_url(encoded_str: str) -> str:
         logging.error(f"Error decoding the string: {e}")
         return ""
 
+# Function to get final URL by following redirects
+def get_final_url(url: str, max_redirects: int = 10) -> str:
+    """Trace the final URL after following redirects."""
+    try:
+        response = requests.get(url, allow_redirects=False, stream=True)
+        redirect_count = 0
+        
+        while response.is_redirect and redirect_count < max_redirects:
+            redirect_count += 1
+            redirect_url = response.headers.get('Location')
+            if redirect_url:
+                response = requests.get(redirect_url, allow_redirects=False, stream=True)
+            else:
+                break
+        
+        return response.url
+    except requests.RequestException as e:
+        logging.error(f"Request error: {e}")
+        return ""
+
 # Handle the start command
 def start(update: Update, context: CallbackContext):
     if len(context.args) == 1:
@@ -62,6 +77,11 @@ def start(update: Update, context: CallbackContext):
         decoded_url = decode_url(encoded_str)
         if not decoded_url:
             update.message.reply_text('Error decoding the encoded string.')
+            return
+
+        final_url = get_final_url(decoded_url)
+        if not final_url:
+            update.message.reply_text('Error fetching the final URL.')
             return
 
         shortened_link = shorten_url(decoded_url)
@@ -83,12 +103,13 @@ def start(update: Update, context: CallbackContext):
             reply_markup=reply_markup
         )
 
-        # Instead of providing a direct download link, stream the file
+        # Stream the file
         try:
-            file = InputFile(decoded_url)
+            file_response = requests.get(final_url, stream=True)
+            file_name = final_url.split('/')[-1]  # Extract file name from URL
             bot.send_document(
                 chat_id=update.message.chat_id,
-                document=file,
+                document=InputFile(file_response.raw, filename=file_name),
                 caption='Here is your file:',
                 parse_mode='MarkdownV2'
             )
