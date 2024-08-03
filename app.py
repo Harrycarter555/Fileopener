@@ -2,7 +2,7 @@ import os
 import base64
 import requests
 from flask import Flask, request
-from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile
 from telegram.ext import Dispatcher, CommandHandler, CallbackContext
 import logging
 
@@ -92,10 +92,7 @@ def start(update: Update, context: CallbackContext):
     else:
         update.message.reply_text('Please provide the encoded URL in the command.')
 
-# Add handlers to dispatcher
-dispatcher.add_handler(CommandHandler('start', start))
-
-# Webhook route
+# Handle URL redirection and streaming
 @app.route('/webhook', methods=['POST'])
 def webhook():
     try:
