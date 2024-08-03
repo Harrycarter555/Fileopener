@@ -42,18 +42,31 @@ def shorten_url(long_url: str) -> str:
 # Function to encode URL and filename
 def encode_url_and_filename(url: str, filename: str) -> str:
     combined_str = f"{url}&&{filename}"
-    return base64.urlsafe_b64encode(combined_str.encode('utf-8')).decode('utf-8').rstrip("=")
+    encoded_bytes = base64.urlsafe_b64encode(combined_str.encode('utf-8'))
+    encoded_str = encoded_bytes.decode('utf-8').rstrip("=")
+    logging.debug(f"Encoded string: {encoded_str}")
+    return encoded_str
 
 # Function to decode URL and filename
 def decode_url_and_filename(encoded_str: str) -> tuple:
     try:
+        logging.debug(f"Encoded string received: {encoded_str}")
+
         padded_encoded_str = encoded_str + '=' * (-len(encoded_str) % 4)
+        logging.debug(f"Padded encoded string: {padded_encoded_str}")
+
         decoded_bytes = base64.urlsafe_b64decode(padded_encoded_str)
         decoded_str = decoded_bytes.decode('utf-8')
+        logging.debug(f"Decoded string: {decoded_str}")
+
         parts = decoded_str.split('&&', 1)
-        return parts if len(parts) == 2 else ("", "")
+        if len(parts) == 2:
+            return parts[0], parts[1]
+        else:
+            logging.error(f"Decoding parts issue, parts found: {parts}")
+            return "", ""
     except (base64.binascii.Error, UnicodeDecodeError) as e:
-        logging.error(f"Decoding error: {e}")
+        logging.error(f"Error decoding the string: {e}")
         return "", ""
 
 # Function to escape MarkdownV2 characters
