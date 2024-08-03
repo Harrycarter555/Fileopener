@@ -165,5 +165,18 @@ def setup_webhook():
     else:
         return "Webhook setup failed"
 
+# Test encoding and decoding functions
+def test_encoding_decoding():
+    test_url = 'http://example.com'
+    test_filename = 'myfile.txt'
+    
+    encoded = encode_url_and_filename(test_url, test_filename)
+    print(f"Encoded: {encoded}")
+
+    decoded_url, decoded_filename = decode_url_and_filename(encoded)
+    print(f"Decoded URL: {decoded_url}")
+    print(f"Decoded Filename: {decoded_filename}")
+
 if __name__ == '__main__':
+    test_encoding_decoding()
     app.run(port=5000)
