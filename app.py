@@ -57,7 +57,7 @@ def decode_url_and_filename(encoded_str: str) -> tuple:
         logging.debug(f"Encoded string received: {encoded_str}")
 
         # Ensure proper padding
-        padded_encoded_str = encoded_str + '=' * (-len(encoded_str) % 4)  # Add padding to meet Base64 requirements
+        padded_encoded_str = encoded_str + '=' * (-len(encoded_str) % 4)
         logging.debug(f"Padded encoded string: {padded_encoded_str}")
 
         decoded_bytes = base64.urlsafe_b64decode(padded_encoded_str)
@@ -69,7 +69,7 @@ def decode_url_and_filename(encoded_str: str) -> tuple:
             return parts[0], parts[1]
         else:
             logging.error(f"Decoding parts issue, parts found: {parts}")
-            return "", ""  # Return empty strings if decoding fails
+            return "", ""
     except (base64.binascii.Error, UnicodeDecodeError) as e:
         logging.error(f"Base64 decoding or Unicode decoding error: {e}")
         return "", ""
