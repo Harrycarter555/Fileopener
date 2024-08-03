@@ -22,7 +22,7 @@ bot = Bot(token=TELEGRAM_TOKEN)
 dispatcher = Dispatcher(bot, None, workers=0)
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)  # Changed to DEBUG for more detailed logs
+logging.basicConfig(level=logging.DEBUG)  # Set to DEBUG for detailed logs
 
 # Function to shorten URL
 def shorten_url(long_url: str) -> str:
@@ -54,11 +54,16 @@ def encode_url_and_filename(url: str, filename: str) -> str:
 # Function to decode URL and filename
 def decode_url_and_filename(encoded_str: str) -> tuple:
     try:
+        logging.debug(f"Encoded string received: {encoded_str}")
+
         # Ensure proper padding
         padded_encoded_str = encoded_str + '=' * (-len(encoded_str) % 4)  # Add padding to meet Base64 requirements
+        logging.debug(f"Padded encoded string: {padded_encoded_str}")
+
         decoded_bytes = base64.urlsafe_b64decode(padded_encoded_str)
         decoded_str = decoded_bytes.decode('utf-8')
         logging.info(f"Decoded string: {decoded_str}")
+
         parts = decoded_str.split('&&', 1)
         if len(parts) == 2:
             return parts[0], parts[1]
