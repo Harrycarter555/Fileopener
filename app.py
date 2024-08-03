@@ -56,6 +56,10 @@ def decode_url_and_filename(encoded_str: str) -> tuple:
     try:
         logging.debug(f"Encoded string received: {encoded_str}")
 
+        # URL decode the string
+        encoded_str = requests.utils.unquote(encoded_str)
+        logging.debug(f"URL-decoded string: {encoded_str}")
+
         # Ensure proper padding
         padded_encoded_str = encoded_str + '=' * (-len(encoded_str) % 4)  # Add padding to meet Base64 requirements
         logging.debug(f"Padded encoded string: {padded_encoded_str}")
