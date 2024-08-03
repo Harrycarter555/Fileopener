@@ -80,13 +80,16 @@ def start(update: Update, context: CallbackContext):
         photo_url = 'https://raw.githubusercontent.com/Harrycarter555/Fileopener/main/IMG_20240801_223423_661.jpg'
         escaped_file_name = escape_markdown_v2(file_name)
 
+        # Generate file opener URL
+        file_opener_url = f'https://t.me/{FILE_OPENER_BOT_USERNAME}?start={encoded_str}'
+
         keyboard = [[InlineKeyboardButton("🔗 Link is here", url=shortened_link)]]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         bot.send_photo(
             chat_id=update.message.chat_id,
             photo=photo_url,
-            caption=f'📸 *File Name:* {escaped_file_name}',
+            caption=f'📸 *File Name:* {escaped_file_name}\n[Open File]({file_opener_url})',
             parse_mode='MarkdownV2',
             reply_markup=reply_markup
         )
