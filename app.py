@@ -70,8 +70,11 @@ def decode_url_and_filename(encoded_str: str) -> tuple:
         else:
             logging.error(f"Decoding parts issue, parts found: {parts}")
             return "", ""  # Return empty strings if decoding fails
+    except (base64.binascii.Error, UnicodeDecodeError) as e:
+        logging.error(f"Base64 decoding or Unicode decoding error: {e}")
+        return "", ""
     except Exception as e:
-        logging.error(f"Error decoding the string: {e}")
+        logging.error(f"Unexpected error during decoding: {e}")
         return "", ""
 
 # Function to escape MarkdownV2 characters
