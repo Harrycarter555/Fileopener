@@ -39,35 +39,30 @@ def shorten_url(long_url: str) -> str:
         logging.error(f"Request error: {e}")
     return long_url
 
-# Function to encode URL and filename
-def encode_url_and_filename(url: str, filename: str) -> str:
-    combined_str = f"{url}&&{filename}"
-    encoded_bytes = base64.urlsafe_b64encode(combined_str.encode('utf-8'))
+# Function to encode URL
+def encode_url(url: str) -> str:
+    encoded_bytes = base64.urlsafe_b64encode(url.encode('utf-8'))
     encoded_str = encoded_bytes.decode('utf-8').rstrip("=")
     logging.debug(f"Encoded string: {encoded_str}")
     return encoded_str
 
-# Function to decode URL and filename
-def decode_url_and_filename(encoded_str: str) -> tuple:
+# Function to decode URL
+def decode_url(encoded_str: str) -> str:
     try:
         logging.debug(f"Encoded string received: {encoded_str}")
 
+        # Ensure proper padding
         padded_encoded_str = encoded_str + '=' * (-len(encoded_str) % 4)
         logging.debug(f"Padded encoded string: {padded_encoded_str}")
 
         decoded_bytes = base64.urlsafe_b64decode(padded_encoded_str)
-        decoded_str = decoded_bytes.decode('utf-8')
-        logging.debug(f"Decoded string: {decoded_str}")
+        decoded_url = decoded_bytes.decode('utf-8')
+        logging.debug(f"Decoded URL: {decoded_url}")
 
-        parts = decoded_str.split('&&', 1)
-        if len(parts) == 2:
-            return parts[0], parts[1]
-        else:
-            logging.error(f"Decoding parts issue, parts found: {parts}")
-            return "", ""
+        return decoded_url
     except (base64.binascii.Error, UnicodeDecodeError) as e:
         logging.error(f"Error decoding the string: {e}")
-        return "", ""
+        return ""
 
 # Function to escape MarkdownV2 characters
 def escape_markdown_v2(text: str) -> str:
@@ -84,17 +79,13 @@ def escape_markdown_v2(text: str) -> str:
 def start(update: Update, context: CallbackContext):
     if len(context.args) == 1:
         encoded_str = context.args[0]
-        decoded_url, file_name = decode_url_and_filename(encoded_str)
+        decoded_url = decode_url(encoded_str)
         if not decoded_url:
             update.message.reply_text('Error decoding the encoded string.')
             return
 
         shortened_link = shorten_url(decoded_url)
         photo_url = 'https://raw.githubusercontent.com/Harrycarter555/Fileopener/main/IMG_20240801_223423_661.jpg'
-        escaped_file_name = escape_markdown_v2(file_name)
-
-        # Generate file opener URL
-        file_opener_url = f'https://t.me/{FILE_OPENER_BOT_USERNAME}?start={encoded_str}'
 
         keyboard = [[InlineKeyboardButton("🔗 Link is here", url=shortened_link)]]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -102,12 +93,12 @@ def start(update: Update, context: CallbackContext):
         bot.send_photo(
             chat_id=update.message.chat_id,
             photo=photo_url,
-            caption=f'📸 *File Name:* {escaped_file_name}\n[Open File]({file_opener_url})',
+            caption='📸 Here is the file link:',
             parse_mode='MarkdownV2',
             reply_markup=reply_markup
         )
     else:
-        update.message.reply_text('Please provide the encoded URL and file name in the command.')
+        update.message.reply_text('Please provide the encoded URL in the command.')
 
 # Add handlers to dispatcher
 dispatcher.add_handler(CommandHandler('start', start))
