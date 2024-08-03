@@ -2,7 +2,7 @@ import os
 import base64
 import requests
 from flask import Flask, request
-from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile
+from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Dispatcher, CommandHandler, CallbackContext
 import logging
 
@@ -14,10 +14,11 @@ WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 URL_SHORTENER_API_KEY = os.getenv('URL_SHORTENER_API_KEY')
 FILE_OPENER_BOT_USERNAME = os.getenv('FILE_OPENER_BOT_USERNAME')
 
+# Validate environment variables
 if not TELEGRAM_TOKEN or not WEBHOOK_URL or not URL_SHORTENER_API_KEY or not FILE_OPENER_BOT_USERNAME:
     raise ValueError("One or more environment variables are not set.")
 
-# Initialize Telegram bot
+# Initialize Telegram bot and dispatcher
 bot = Bot(token=TELEGRAM_TOKEN)
 dispatcher = Dispatcher(bot, None, workers=0)
 
@@ -42,24 +43,14 @@ def shorten_url(long_url: str) -> str:
 # Function to encode URL
 def encode_url(url: str) -> str:
     encoded_bytes = base64.urlsafe_b64encode(url.encode('utf-8'))
-    encoded_str = encoded_bytes.decode('utf-8').rstrip("=")
-    logging.debug(f"Encoded string: {encoded_str}")
-    return encoded_str
+    return encoded_bytes.decode('utf-8').rstrip("=")
 
 # Function to decode URL
 def decode_url(encoded_str: str) -> str:
     try:
-        logging.debug(f"Encoded string received: {encoded_str}")
-
-        # Ensure proper padding
         padded_encoded_str = encoded_str + '=' * (-len(encoded_str) % 4)
-        logging.debug(f"Padded encoded string: {padded_encoded_str}")
-
         decoded_bytes = base64.urlsafe_b64decode(padded_encoded_str)
-        decoded_url = decoded_bytes.decode('utf-8')
-        logging.debug(f"Decoded URL: {decoded_url}")
-
-        return decoded_url
+        return decoded_bytes.decode('utf-8')
     except (base64.binascii.Error, UnicodeDecodeError) as e:
         logging.error(f"Error decoding the string: {e}")
         return ""
@@ -78,7 +69,7 @@ def start(update: Update, context: CallbackContext):
 
         keyboard = [
             [InlineKeyboardButton("🔗 Link is here", url=shortened_link)],
-            [InlineKeyboardButton("📚 How to open (Tutorial)", url="https://example.com/tutorial")]  # Tutorial icon added
+            [InlineKeyboardButton("📚 How to open (Tutorial)", url="https://example.com/tutorial")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -92,7 +83,10 @@ def start(update: Update, context: CallbackContext):
     else:
         update.message.reply_text('Please provide the encoded URL in the command.')
 
-# Handle URL redirection and streaming
+# Add handlers to dispatcher
+dispatcher.add_handler(CommandHandler('start', start))
+
+# Webhook route
 @app.route('/webhook', methods=['POST'])
 def webhook():
     try:
@@ -118,6 +112,7 @@ def setup_webhook():
     if response.json().get('ok'):
         return "Webhook setup ok"
     else:
+        logging.error(f"Webhook setup failed: {response.json()}")
         return "Webhook setup failed"
 
 if __name__ == '__main__':
