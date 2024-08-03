@@ -35,6 +35,7 @@ def shorten_url(long_url: str) -> str:
         response.raise_for_status()  # Raise an exception for HTTP errors
         
         response_data = response.json()
+        logging.info(f"Shorten URL response data: {response_data}")
         if response_data.get("status") == "success":
             short_url = response_data.get("shortenedUrl", "")
             if short_url:
@@ -49,7 +50,9 @@ def shorten_url(long_url: str) -> str:
 def encode_url_and_filename(url: str, filename: str) -> str:
     combined_str = f"{url}&&{filename}"
     encoded_bytes = base64.urlsafe_b64encode(combined_str.encode('utf-8'))
-    return encoded_bytes.decode('utf-8').rstrip("=")
+    encoded_str = encoded_bytes.decode('utf-8').rstrip("=")
+    logging.info(f"Encoded string: {encoded_str}")
+    return encoded_str
 
 # Function to decode URL and filename
 def decode_url_and_filename(encoded_str: str) -> tuple:
