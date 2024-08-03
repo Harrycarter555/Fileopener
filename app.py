@@ -64,17 +64,6 @@ def decode_url(encoded_str: str) -> str:
         logging.error(f"Error decoding the string: {e}")
         return ""
 
-# Function to escape MarkdownV2 characters
-def escape_markdown_v2(text: str) -> str:
-    replacements = {
-        '_': r'\_', '*': r'\*', '[': r'\[', ']': r'\]', '(': r'\(', ')': r'\)', '~': r'\~', '`': r'\`',
-        '>': r'\>', '#': r'\#', '+': r'\+', '-': r'\-', '=': r'\=', '|': r'\|', '{': r'\{', '}': r'\}',
-        '.': r'\.', '!': r'\!'
-    }
-    for char, replacement in replacements.items():
-        text = text.replace(char, replacement)
-    return text
-
 # Handle the start command
 def start(update: Update, context: CallbackContext):
     if len(context.args) == 1:
@@ -87,7 +76,10 @@ def start(update: Update, context: CallbackContext):
         shortened_link = shorten_url(decoded_url)
         photo_url = 'https://raw.githubusercontent.com/Harrycarter555/Fileopener/main/IMG_20240801_223423_661.jpg'
 
-        keyboard = [[InlineKeyboardButton("🔗 Link is here", url=shortened_link)]]
+        keyboard = [
+            [InlineKeyboardButton("🔗 Link is here", url=shortened_link)],
+            [InlineKeyboardButton("📚 How to open (Tutorial)", url="https://example.com/tutorial")]  # Tutorial icon added
+        ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         bot.send_photo(
