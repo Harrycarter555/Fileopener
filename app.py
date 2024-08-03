@@ -2,7 +2,7 @@ import os
 import base64
 import requests
 from flask import Flask, request
-from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile
 from telegram.ext import Dispatcher, CommandHandler, CallbackContext
 import logging
 
@@ -66,13 +66,15 @@ def start(update: Update, context: CallbackContext):
 
         shortened_link = shorten_url(decoded_url)
         photo_url = 'https://raw.githubusercontent.com/Harrycarter555/Fileopener/main/IMG_20240801_223423_661.jpg'
-
+        
+        # Sending a photo with a link and tutorial button
         keyboard = [
             [InlineKeyboardButton("🔗 Link is here", url=shortened_link)],
             [InlineKeyboardButton("📚 How to open (Tutorial)", url="https://example.com/tutorial")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
+        # Sending a photo with the keyboard
         bot.send_photo(
             chat_id=update.message.chat_id,
             photo=photo_url,
@@ -80,6 +82,19 @@ def start(update: Update, context: CallbackContext):
             parse_mode='MarkdownV2',
             reply_markup=reply_markup
         )
+
+        # Instead of providing a direct download link, stream the file
+        try:
+            file = InputFile(decoded_url)
+            bot.send_document(
+                chat_id=update.message.chat_id,
+                document=file,
+                caption='Here is your file:',
+                parse_mode='MarkdownV2'
+            )
+        except Exception as e:
+            logging.error(f"Error streaming the file: {e}")
+            update.message.reply_text(f'An error occurred while trying to stream the file: {e}')
     else:
         update.message.reply_text('Please provide the encoded URL in the command.')
 
