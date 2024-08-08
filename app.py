@@ -5,6 +5,7 @@ from flask import Flask, request
 from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile
 from telegram.ext import Dispatcher, CommandHandler, CallbackContext
 import logging
+import time
 
 app = Flask(__name__)
 
@@ -73,6 +74,26 @@ def get_final_url(url: str, max_redirects: int = 10) -> str:
         logging.error(f"Request error: {e}")
         return ""
 
+# Function to download and stream the file
+def download_and_stream_file(url: str, max_retries: int = 5, delay: int = 10):
+    """Download and stream the file, retrying if necessary."""
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(url, headers=headers, stream=True)
+            if response.status_code == 200:
+                file_name = url.split('/')[-1]
+                return InputFile(response.raw, filename=file_name)
+            else:
+                logging.warning(f"Retrying download, attempt {attempt + 1}/{max_retries}")
+                time.sleep(delay)
+        except requests.RequestException as e:
+            logging.error(f"Error downloading file: {e}")
+            time.sleep(delay)
+    return None
+
 # Handle the start command
 def start(update: Update, context: CallbackContext):
     if len(context.args) == 1:
@@ -80,11 +101,6 @@ def start(update: Update, context: CallbackContext):
         decoded_url = decode_url(encoded_str)
         if not decoded_url:
             update.message.reply_text('Error decoding the encoded string.')
-            return
-
-        final_url = get_final_url(decoded_url)
-        if not final_url:
-            update.message.reply_text('Error fetching the final URL.')
             return
 
         shortened_link = shorten_url(decoded_url)
@@ -109,31 +125,36 @@ def start(update: Update, context: CallbackContext):
     else:
         update.message.reply_text('Please provide the encoded URL in the command.')
 
-# Handle the file download and streaming command
+# Handle the file streaming command
 def stream_file(update: Update, context: CallbackContext):
-    file_url = context.args[0] if context.args else None
-    if not file_url:
-        update.message.reply_text('Please provide the file URL.')
-        return
+    if len(context.args) == 1:
+        encoded_str = context.args[0]
+        decoded_url = decode_url(encoded_str)
+        if not decoded_url:
+            update.message.reply_text('Error decoding the encoded string.')
+            return
 
-    final_url = get_final_url(file_url)
-    if not final_url:
-        update.message.reply_text('Error fetching the final URL.')
-        return
+        final_url = get_final_url(decoded_url)
+        if not final_url:
+            update.message.reply_text('Error fetching the final URL.')
+            return
 
-    try:
-        file_response = requests.get(final_url, stream=True)
-        file_name = final_url.split('/')[-1]  # Extract file name from URL
-        
-        bot.send_document(
-            chat_id=update.message.chat_id,
-            document=InputFile(file_response.raw, filename=file_name),
-            caption='Here is your file:',
-            parse_mode='MarkdownV2'
-        )
-    except Exception as e:
-        logging.error(f"Error streaming the file: {e}")
-        update.message.reply_text(f'An error occurred while trying to stream the file: {e}')
+        file_input = download_and_stream_file(final_url)
+        if file_input:
+            try:
+                bot.send_document(
+                    chat_id=update.message.chat_id,
+                    document=file_input,
+                    caption='Here is your file:',
+                    parse_mode='MarkdownV2'
+                )
+            except Exception as e:
+                logging.error(f"Error streaming the file: {e}")
+                update.message.reply_text(f'An error occurred while trying to stream the file: {e}')
+        else:
+            update.message.reply_text('Failed to download the file after multiple attempts.')
+    else:
+        update.message.reply_text('Please provide the encoded URL in the command.')
 
 # Add handlers to dispatcher
 dispatcher.add_handler(CommandHandler('start', start))
