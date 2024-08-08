@@ -1,9 +1,8 @@
 import os
 import base64
 import requests
-from io import BytesIO
 from flask import Flask, request
-from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile
+from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Dispatcher, CommandHandler, CallbackContext
 import logging
 
@@ -91,14 +90,14 @@ def start(update: Update, context: CallbackContext):
         shortened_link = shorten_url(decoded_url)
         photo_url = 'https://raw.githubusercontent.com/Harrycarter555/Fileopener/main/IMG_20240801_223423_661.jpg'
         
-        # Sending a photo with a link and tutorial button
+        # Send a photo with a link and tutorial button
         keyboard = [
-            [InlineKeyboardButton("🔗 Link is here", url=shortened_link)],
+            [InlineKeyboardButton("🔗 Download File", url=shortened_link)],
             [InlineKeyboardButton("📚 How to open (Tutorial)", url="https://example.com/tutorial")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        # Sending a photo with the keyboard
+        # Send a photo with the keyboard
         bot.send_photo(
             chat_id=update.message.chat_id,
             photo=photo_url,
@@ -107,24 +106,6 @@ def start(update: Update, context: CallbackContext):
             reply_markup=reply_markup
         )
 
-        # Stream the file
-        try:
-            file_response = requests.get(final_url, headers={'User-Agent': 'Mozilla/5.0'}, stream=True)
-            file_response.raise_for_status()  # Ensure we handle HTTP errors
-            file_name = final_url.split('/')[-1]  # Extract file name from URL
-            
-            # Use BytesIO to convert file content to a file-like object
-            file_content = BytesIO(file_response.content)
-            
-            bot.send_document(
-                chat_id=update.message.chat_id,
-                document=InputFile(file_content, filename=file_name),
-                caption='Here is your file:',
-                parse_mode='MarkdownV2'
-            )
-        except Exception as e:
-            logging.error(f"Error streaming the file: {e}")
-            update.message.reply_text(f'An error occurred while trying to stream the file: {e}')
     else:
         update.message.reply_text('Please provide the encoded URL in the command.')
 
