@@ -54,15 +54,18 @@ def decode_url(encoded_str: str) -> str:
 # Function to get final URL by following redirects
 def get_final_url(url: str, max_redirects: int = 10) -> str:
     """Trace the final URL after following redirects."""
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
     try:
-        response = requests.get(url, allow_redirects=False, stream=True)
+        response = requests.get(url, headers=headers, allow_redirects=False, stream=True)
         redirect_count = 0
         
         while response.is_redirect and redirect_count < max_redirects:
             redirect_count += 1
             redirect_url = response.headers.get('Location')
             if redirect_url:
-                response = requests.get(redirect_url, allow_redirects=False, stream=True)
+                response = requests.get(redirect_url, headers=headers, allow_redirects=False, stream=True)
             else:
                 break
         
@@ -106,7 +109,7 @@ def start(update: Update, context: CallbackContext):
 
         # Stream the file
         try:
-            file_response = requests.get(final_url, stream=True)
+            file_response = requests.get(final_url, headers={'User-Agent': 'Mozilla/5.0'}, stream=True)
             file_response.raise_for_status()  # Ensure we handle HTTP errors
             file_name = final_url.split('/')[-1]  # Extract file name from URL
             
