@@ -103,12 +103,19 @@ def start(update: Update, context: CallbackContext):
             update.message.reply_text('Error decoding the encoded string.')
             return
 
+        final_url = get_final_url(decoded_url)
+        if not final_url:
+            update.message.reply_text('Error fetching the final URL.')
+            return
+
         shortened_link = shorten_url(decoded_url)
+        file_name = final_url.split('/')[-1]
+        link_with_params = f"https://t.me/{FILE_OPENER_BOT_USERNAME}?start={shortened_link}&file_name={file_name}"
         photo_url = 'https://raw.githubusercontent.com/Harrycarter555/Fileopener/main/IMG_20240801_223423_661.jpg'
         
         # Send a photo with a link and tutorial button
         keyboard = [
-            [InlineKeyboardButton("🔗 Download File", url=shortened_link)],
+            [InlineKeyboardButton(f"🔗 Download {file_name}", url=link_with_params)],
             [InlineKeyboardButton("📚 How to open (Tutorial)", url="https://example.com/tutorial")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
