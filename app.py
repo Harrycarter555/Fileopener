@@ -101,7 +101,7 @@ def start(update: Update, context: CallbackContext):
         bot.send_photo(
             chat_id=update.message.chat_id,
             photo=photo_url,
-            caption='📸 Here is the file link{file_name}:',
+            caption='📸 Here is the file link:',
             parse_mode='MarkdownV2',
             reply_markup=reply_markup
         )
