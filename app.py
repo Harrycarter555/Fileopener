@@ -1,6 +1,7 @@
 import os
 import base64
 import requests
+from io import BytesIO
 from flask import Flask, request
 from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile
 from telegram.ext import Dispatcher, CommandHandler, CallbackContext
@@ -106,10 +107,15 @@ def start(update: Update, context: CallbackContext):
         # Stream the file
         try:
             file_response = requests.get(final_url, stream=True)
+            file_response.raise_for_status()  # Ensure we handle HTTP errors
             file_name = final_url.split('/')[-1]  # Extract file name from URL
+            
+            # Use BytesIO to convert file content to a file-like object
+            file_content = BytesIO(file_response.content)
+            
             bot.send_document(
                 chat_id=update.message.chat_id,
-                document=InputFile(file_response.raw, filename=file_name),
+                document=InputFile(file_content, filename=file_name),
                 caption='Here is your file:',
                 parse_mode='MarkdownV2'
             )
