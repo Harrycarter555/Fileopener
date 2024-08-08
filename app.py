@@ -2,10 +2,9 @@ import os
 import base64
 import requests
 from flask import Flask, request
-from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile
+from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Dispatcher, CommandHandler, CallbackContext
 import logging
-import time
 
 app = Flask(__name__)
 
@@ -74,26 +73,6 @@ def get_final_url(url: str, max_redirects: int = 10) -> str:
         logging.error(f"Request error: {e}")
         return ""
 
-# Function to download and stream the file
-def download_and_stream_file(url: str, max_retries: int = 5, delay: int = 10):
-    """Download and stream the file, retrying if necessary."""
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-    for attempt in range(max_retries):
-        try:
-            response = requests.get(url, headers=headers, stream=True)
-            if response.status_code == 200:
-                file_name = url.split('/')[-1]
-                return InputFile(response.raw, filename=file_name)
-            else:
-                logging.warning(f"Retrying download, attempt {attempt + 1}/{max_retries}")
-                time.sleep(delay)
-        except requests.RequestException as e:
-            logging.error(f"Error downloading file: {e}")
-            time.sleep(delay)
-    return None
-
 # Handle the start command
 def start(update: Update, context: CallbackContext):
     if len(context.args) == 1:
@@ -109,13 +88,11 @@ def start(update: Update, context: CallbackContext):
             return
 
         shortened_link = shorten_url(decoded_url)
-        file_name = final_url.split('/')[-1]
-        link_with_params = f"https://t.me/{FILE_OPENER_BOT_USERNAME}?start={shortened_link}&file_name={file_name}"
         photo_url = 'https://raw.githubusercontent.com/Harrycarter555/Fileopener/main/IMG_20240801_223423_661.jpg'
         
         # Send a photo with a link and tutorial button
         keyboard = [
-            [InlineKeyboardButton(f"🔗 Download {file_name}", url=link_with_params)],
+            [InlineKeyboardButton("🔗 Download File", url=shortened_link)],
             [InlineKeyboardButton("📚 How to open (Tutorial)", url="https://example.com/tutorial")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -124,7 +101,7 @@ def start(update: Update, context: CallbackContext):
         bot.send_photo(
             chat_id=update.message.chat_id,
             photo=photo_url,
-            caption='📸 Here is the file link:',
+            caption='📸 Here is the file link{file_name}:',
             parse_mode='MarkdownV2',
             reply_markup=reply_markup
         )
@@ -132,40 +109,8 @@ def start(update: Update, context: CallbackContext):
     else:
         update.message.reply_text('Please provide the encoded URL in the command.')
 
-# Handle the file streaming command
-def stream_file(update: Update, context: CallbackContext):
-    if len(context.args) == 1:
-        encoded_str = context.args[0]
-        decoded_url = decode_url(encoded_str)
-        if not decoded_url:
-            update.message.reply_text('Error decoding the encoded string.')
-            return
-
-        final_url = get_final_url(decoded_url)
-        if not final_url:
-            update.message.reply_text('Error fetching the final URL.')
-            return
-
-        file_input = download_and_stream_file(final_url)
-        if file_input:
-            try:
-                bot.send_document(
-                    chat_id=update.message.chat_id,
-                    document=file_input,
-                    caption='Here is your file:',
-                    parse_mode='MarkdownV2'
-                )
-            except Exception as e:
-                logging.error(f"Error streaming the file: {e}")
-                update.message.reply_text(f'An error occurred while trying to stream the file: {e}')
-        else:
-            update.message.reply_text('Failed to download the file after multiple attempts.')
-    else:
-        update.message.reply_text('Please provide the encoded URL in the command.')
-
 # Add handlers to dispatcher
 dispatcher.add_handler(CommandHandler('start', start))
-dispatcher.add_handler(CommandHandler('stream', stream_file))
 
 # Webhook route
 @app.route('/webhook', methods=['POST'])
