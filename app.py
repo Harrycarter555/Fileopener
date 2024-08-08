@@ -2,7 +2,7 @@ import os
 import base64
 import requests
 from flask import Flask, request
-from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile
 from telegram.ext import Dispatcher, CommandHandler, CallbackContext
 import logging
 
@@ -109,8 +109,35 @@ def start(update: Update, context: CallbackContext):
     else:
         update.message.reply_text('Please provide the encoded URL in the command.')
 
+# Handle the file download and streaming command
+def stream_file(update: Update, context: CallbackContext):
+    file_url = context.args[0] if context.args else None
+    if not file_url:
+        update.message.reply_text('Please provide the file URL.')
+        return
+
+    final_url = get_final_url(file_url)
+    if not final_url:
+        update.message.reply_text('Error fetching the final URL.')
+        return
+
+    try:
+        file_response = requests.get(final_url, stream=True)
+        file_name = final_url.split('/')[-1]  # Extract file name from URL
+        
+        bot.send_document(
+            chat_id=update.message.chat_id,
+            document=InputFile(file_response.raw, filename=file_name),
+            caption='Here is your file:',
+            parse_mode='MarkdownV2'
+        )
+    except Exception as e:
+        logging.error(f"Error streaming the file: {e}")
+        update.message.reply_text(f'An error occurred while trying to stream the file: {e}')
+
 # Add handlers to dispatcher
 dispatcher.add_handler(CommandHandler('start', start))
+dispatcher.add_handler(CommandHandler('stream', stream_file))
 
 # Webhook route
 @app.route('/webhook', methods=['POST'])
